@@ -1,0 +1,50 @@
+{
+    "parser": "babel-eslint",
+    "plugins": [
+        "babel"
+    ],
+    "env": {
+        "browser": true,
+        "es6": true,
+        "node": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaFeatures": {
+            "experimentalObjectRestSpread": true,
+            "jsx": true
+        },
+        "sourceType": "module"
+    },
+    "rules": {
+        // Formatting (spacing)
+        "indent": [ "error", 4 ],
+        "operator-linebreak": [ 1, "before" ],
+        "brace-style": [ "error", "stroustrup", { "allowSingleLine": false } ],
+        "arrow-spacing": "error",
+        "generator-star-spacing": "error",
+        "object-curly-spacing": [ "error", "always" ],
+        "array-bracket-spacing": [ "error", "always" ],
+        "semi-spacing": [ "error", { "before": false, "after": true } ],
+        "space-before-blocks": "error",
+        "space-before-function-paren": [ "error", "never" ],
+        "space-in-parens": [ "error", "never" ],
+        "space-infix-ops": "error",
+        "space-unary-ops": [ "error", { "words": true, "nonwords": false } ],
+
+        // Formatting (syntax)
+        "quotes": [ "error", "single", { "avoidEscape": true, "allowTemplateLiterals": true } ],
+        "object-shorthand": "error",
+        "semi": [ "error", "always" ],
+        "curly": "error",
+
+        // Semantic rules
+        "eqeqeq": "error",
+        "new-cap": [ "error", { "capIsNew": false } ],
+        "no-undef": "error",
+        "constructor-super": "error",
+
+        // Code cleanliness
+        "no-console": [ "error", { "allow": ["warn", "error"] } ]  // Just prevent console.log
+    }
+}

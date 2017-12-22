@@ -1,0 +1,63 @@
+/*
+ *  Copyright 2017 Adobe Systems Incorporated. All rights reserved.
+ *  This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License. You may obtain a copy
+ *  of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under
+ *  the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ *  OF ANY KIND, either express or implied. See the License for the specific language
+ *  governing permissions and limitations under the License.
+ *
+ */
+
+
+/*
+    Learn more about :local and composes from
+    https://github.com/webpack/css-loader#local-scope
+*/
+
+:local(.container) {
+    text-align: center;
+    margin-top: 10px;
+    font-family: Helvetica;
+}
+
+:local(.box) {
+    margin-left: auto;
+    margin-right: auto;
+    width: 500px;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: auto;
+}
+
+:local(.congrats) {
+    composes: box;
+    padding: 10px;
+    background: #f2e510;
+    margin-bottom: 30px;
+}
+
+:local(.sample) {
+    composes: box;
+    padding: 10px;
+    border: 1px solid #d8d8d8;
+    margin-bottom: 30px;
+}
+
+:local(.watchInfo) {
+    composes: box;
+    background: #F5F5F5;
+}
+
+:local(.hello) {
+    font-size: 20px;
+}
+
+:local(.userName) {
+    margin: 10px;
+    padding: 10px;
+    font-size: 20px;
+    text-align: center;
+}

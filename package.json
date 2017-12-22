@@ -1,0 +1,50 @@
+{
+  "name": "@twist/react",
+  "version": "0.1.0",
+  "author": "Adobe Systems Inc.",
+  "license": "Apache-2.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "build-production": "NODE_ENV=production npm run build",
+    "watch": "webpack-dev-server --hot",
+    "linter": "eslint --ext .js,.jsx .",
+    "test": "karma start --browsers Firefox --single-run"
+  },
+  "devDependencies": {
+    "@twist/core": "adobe/twist",
+    "autoprefixer": "6.4.0",
+    "babel-eslint": "7.2.3",
+    "babel-plugin-istanbul": "4.1.5",
+    "css-loader": "0.28.4",
+    "eslint": "4.3.0",
+    "eslint-plugin-babel": "4.1.2",
+    "file-loader": "0.9.0",
+    "html-webpack-plugin": "2.30.1",
+    "karma": "1.1.2",
+    "karma-chrome-launcher": "2.1.1",
+    "karma-coverage": "1.1.1",
+    "karma-firefox-launcher": "1.0.1",
+    "karma-mocha": "1.3.0",
+    "karma-mocha-reporter": "2.2.2",
+    "karma-webpack": "2.0.4",
+    "less": "2.7.1",
+    "less-loader": "2.2.3",
+    "mocha": "3.4.2",
+    "postcss-loader": "2.0.5",
+    "sinon": "2.1.0",
+    "style-loader": "0.13.2",
+    "webpack": "3.4.1",
+    "webpack-dev-server": "2.6.1"
+  },
+  "peerDependencies": {
+    "@twist/core": "adobe/twist"
+  },
+  "dependencies": {
+    "babel-plugin-transform-react-display-name": "^6.25.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "prop-types": "^15.6.0",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0"
+  }
+}
