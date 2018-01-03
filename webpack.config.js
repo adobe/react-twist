@@ -12,14 +12,12 @@
  */
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ReactTwistPlugin = require('./src/ReactTwistPlugin');
+const ReactTwistPlugin = require('@twist/react-webpack-plugin');
 const autoprefixer = require('autoprefixer');
 const path = require('path');
 const webpack = require('webpack');
 
-const config = new ReactTwistPlugin()
-    .addLibrary(require('@torqjs/router'))
-    .addLibrary(require('@torqjs/virtual-scroller'));
+const config = new ReactTwistPlugin();
 
 if (process.env.NODE_ENV === 'test') {
     config.addBabelPlugin('istanbul');

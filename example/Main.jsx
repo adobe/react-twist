@@ -14,8 +14,6 @@
 import ReactDOM from 'react-dom';
 import MainView from './MainView';
 
-import Model from './scroll/Model';
-
 @Component({ fork: true })
 export class Main {
     render() {
