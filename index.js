@@ -11,10 +11,11 @@
  *
  */
 
+ // Decorators
+export { default as Attribute } from './src/decorators/Attribute';
+export { default as Component } from './src/decorators/Component';
+
 // Core
 export { default as BaseComponent } from './src/BaseComponent';
 export { default as BaseVirtualComponent } from './src/BaseVirtualComponent';
-
-// Decorators
-export { default as Attribute } from './src/decorators/Attribute';
-export { default as Component } from './src/decorators/Component';
+// (BaseVirtualComponent depends on the Component decorator, so it must be exported after the decorator.)
