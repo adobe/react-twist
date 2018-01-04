@@ -15,7 +15,7 @@ module.exports = function(config) {
     return config
         .addDecorator('Component', {
             module: '@twist/react',
-            export: 'Component'
+            export: 'Component',
             inherits: {
                 module: '@twist/react',
                 export: 'BaseComponent'
