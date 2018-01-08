@@ -1,0 +1,10 @@
+{
+    "libraries": [
+        "@twist/core"
+    ],
+    "decorators": [
+        "Attribute",
+        [ "Component", { "inherits": "BaseComponent" } ],
+        [ "VirtualComponent", { "inherits": "BaseVirtualComponent" } ]
+    ]
+}

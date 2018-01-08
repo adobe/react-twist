@@ -11,7 +11,7 @@
  *
  */
 
- // Decorators
+// Decorators
 export { default as Attribute } from './src/decorators/Attribute';
 export { default as Component } from './src/decorators/Component';
 

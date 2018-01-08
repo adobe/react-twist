@@ -1,14 +1,18 @@
 {
     "parser": "babel-eslint",
     "plugins": [
-        "babel"
+        "babel",
+        "@twist/core"
     ],
     "env": {
         "browser": true,
         "es6": true,
         "node": true
     },
-    "extends": "eslint:recommended",
+    "extends": [
+        "eslint:recommended",
+        "plugin:@twist/core/recommended"
+    ],
     "parserOptions": {
         "ecmaFeatures": {
             "experimentalObjectRestSpread": true,
@@ -41,8 +45,7 @@
         // Semantic rules
         "eqeqeq": "error",
         "new-cap": [ "error", { "capIsNew": false } ],
-        "no-undef": "error",
-        "constructor-super": "error",
+        "constructor-super": "off", // Remove once twist plugin has rule for this
 
         // Code cleanliness
         "no-console": [ "error", { "allow": ["warn", "error"] } ]  // Just prevent console.log
