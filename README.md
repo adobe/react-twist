@@ -29,7 +29,7 @@ By themselves, observables provide the "glue" between your model and your view, 
 
 Here's an example that shows what React-Twist looks like:
 
-```javascript
+```jsx
 @Store
 class MyStore {
     @State.byVal name;
@@ -138,7 +138,7 @@ The additional APIs that a component has access to are as follows:
 
 As an example, the following React-Twist code:
 
-```javascript
+```jsx
 <Dialog>
     <dialog:header as={ title }><h1>Header { title }</h1></dialog:header>
     Contents
@@ -148,7 +148,7 @@ As an example, the following React-Twist code:
 
 Is equivalent to (in pure React):
 
-```javascript
+```jsx
 <Dialog dialog_header={ title => <h1>Header { title }</h1> } dialog_footer={ <div>Footer</div> } >
     Contents
 </Dialog>
@@ -159,26 +159,26 @@ Is equivalent to (in pure React):
 
 React doesn't provide any primitives for two-way data binding - you have to register an event listener to detect changes, before you can. Here's an example of what this looks like when binding to the input of a text field (assuming that `this.value` is observable):
 
-```javascript
+```jsx
 <input value={ this.value } onChange={ ev => this.value = ev.target.value }/>
 ```
 
 Since this pattern is very common, React-Twist comes with a handy shorthand - simply prefix the attribute you want to do two-way data binding on with `bind:`. For example, the following is equivalent to the above:
 
-```javascript
+```jsx
 <input bind:value={ this.value } />
 ```
 
 This works for the `value` attribute on input fields, and the `checked` attribute on checkboxes and radio buttons. For the `checked` attribute, the following two lines of code are equivalent:
 
-```javascript
+```jsx
 <input type="checkbox" bind:checked={ this.value } />
 <input type="checkbox" checked={ this.value } onChange={ () => this.value = !this.value }/>
 ```
 
 You can do two-way binding when passing data into custom components as well - other than the special cases of `value` and `checked` on `<input/>` elements, all `bind:xxx` attributes are treated as follows:
 
-```javascript
+```jsx
 <MyComponent bind:data={ this.data } />
 <MyComponent data={ this.data } onDataChange={ val => this.data = val } />
 ```
@@ -196,7 +196,7 @@ There are a number of pitfalls you need to watch out for with React, that can le
 
 In React, the `render()` function of a component runs every time the component changes, and needs to re-render. This has an implication for event handlers - for example, if you write the following:
 
-```javascript
+```jsx
 render() {
     return <button onClick={ () => this.clickCount++ }>My Button</button>;
 }
@@ -206,7 +206,7 @@ Then every time the component re-renders, a new closure is created for the arrow
 
 The solution to this is to "hoist" the function out of render, namely:
 
-```javascript
+```jsx
 @Bind
 handleClick() {
     this.clickCount++
