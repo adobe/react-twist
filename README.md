@@ -8,6 +8,15 @@ TODO: Introduction
 
 React-Twist adds the following features to React:
 
+- [Data Binding and State Management](#data-binding-and-state-management)
+- [Declarative JSX](#declarative-jsx)
+- [Enhanced class and style attributes](#enhanced-class-and-style-attributes)
+- [Enhanced Component APIs](#enhanced-component-apis)
+- [Two-Way Data Binding](#two-way-data-binding)
+- [Automatic Performance Optimizations](#automatic-performance-optimizations)
+
+---
+
 ### Data Binding and State Management
 
 React-Twist first and foremost lets you use the [Twist](http://github.com/adobe/twist) state management library with React. The most basic concept in Twist is the notion of _observables_. You can mark a property of any class (including a component) as observable, using the `@Observable` decorator - this lets us know when it's used, and when it changes, so that we can update the view when the model changes. There are equivalents for collections too: `ObservableArray`, `ObservableMap`, and `ObservableSet`.
@@ -63,7 +72,7 @@ One of the big features in React-Twist is its toolkit of *structural components*
 
 Structural components can be thought of as adding control-flow constructs to JSX - `<if>`, `<repeat>`, `<using>`, etc. As an example, consider the following render function:
 
-```javascript
+```jsx
 render() {
     return <div>
         <h1>My Items</h1>
@@ -79,17 +88,15 @@ render() {
 
 This is equivalent to:
 
-```javascript
+```jsx
 render() {
     return <div>
         <h1>My Items</h1>
         {
-            this.items.map(item => {
-                return [
-                    item.onsale && <div>{ item.name }</div>,
-                    <div>Secret Item</div>
-                ].filter(x => x);
-            })
+            this.items.map(item => [
+                item.onsale && <div>Fantastic Sale Price!</div>,
+                <div>{ item.name }</div>
+            ].filter(Boolean))
         }
     </div>;
 }
