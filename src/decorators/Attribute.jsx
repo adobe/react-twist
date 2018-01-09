@@ -15,65 +15,64 @@
 
 import { addAttribute, getChangeHandler } from '../internal/AttributeUtils';
 import { Binder } from '@twist/core';
+import DecoratorUtils from '@twist/core/src/internal/utils/DecoratorUtils';
 let BinderRecordEvent = Binder.recordEvent;
 
-export default function(propType, alias) {
 
+export default DecoratorUtils.makePropertyDecorator((target, property, descriptor, propType, alias) => {
     if (typeof propType === 'string') {
         // Assume this is the alias, not a propType
         alias = propType;
         propType = undefined;
     }
 
-    return function Attribute(property) {
-        const key = property.name;
-        const eventKey = getChangeHandler(key);
+    const eventProperty = getChangeHandler(property);
 
-        let defaultValue = undefined;
-        if (property.init) {
-            // We can't have defaultProps that depend on the instance of the class.
-            // This evaluates with `this` being undefined, so we can detect and warn if it depends on the instance.
-            try {
-                defaultValue = property.init.apply();
-            }
-            catch(e) {
-                console.warn(`Ignoring default value for attribute "${key}" of ${property.classObject.name} - default attribute values cannot reference "this" in React, since they're defined on the class.`);
-            }
+    let defaultValue = descriptor.value;
+    if (descriptor.initializer) {
+        // We can't have defaultProps that depend on the instance of the class.
+        // This evaluates with `this` being undefined, so we can detect and warn if it depends on the instance.
+        try {
+            defaultValue = descriptor.initializer();
         }
+        catch(e) {
+            console.warn(`Ignoring default value for attribute "${property}" of ${target.name} - default attribute values cannot reference "this" in React, since they're defined on the class.`);
+        }
+    }
 
-        addAttribute(property.classObject, key, propType, defaultValue);
-        property.add(key, {
+    addAttribute(target, property, propType, defaultValue);
+
+    if (alias) {
+        addAttribute(target, alias, propType, defaultValue);
+        Object.defineProperty(target, alias, {
             configurable: true,
             enumerable: false,
             get() {
-                BinderRecordEvent(this, key);
-                return this.props[key];
+                BinderRecordEvent(this, property);
+                return this.props[property];
             },
             set(val) {
-                if (this.props[eventKey]) {
-                    // TODO: We should have an option to control whether you want this, e.g. via the prop type
-                    this.props[eventKey](val);
-                }
-                else {
-                    console.warn(`Attribute "${key}" of ${property.classObject.name} was modified, but no "${eventKey}" attribute was specified. If you want two-way binding, make sure to use "bind:${key}" as the attribute name.`);
-                }
+                // TODO: We should have an option to control whether you want this, e.g. via the prop type
+                this.props[eventProperty] && this.props[eventProperty](val);
             }
         });
+    }
 
-        if (alias) {
-            addAttribute(property.classObject, alias, propType, defaultValue);
-            property.add(alias, {
-                configurable: true,
-                enumerable: false,
-                get() {
-                    BinderRecordEvent(this, key);
-                    return this.props[key];
-                },
-                set(val) {
-                    // TODO: We should have an option to control whether you want this, e.g. via the prop type
-                    this.props[eventKey] && this.props[eventKey](val);
-                }
-            });
+    return {
+        configurable: true,
+        enumerable: false,
+        get() {
+            BinderRecordEvent(this, property);
+            return this.props[property];
+        },
+        set(val) {
+            if (this.props[eventProperty]) {
+                // TODO: We should have an option to control whether you want this, e.g. via the prop type
+                this.props[eventProperty](val);
+            }
+            else {
+                console.warn(`Attribute "${property}" of ${target.name} was modified, but no "${eventProperty}" attribute was specified. If you want two-way binding, make sure to use "bind:${property}" as the attribute name.`);
+            }
         }
     };
-}
+});

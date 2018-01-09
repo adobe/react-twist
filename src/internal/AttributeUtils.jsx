@@ -21,15 +21,16 @@ export function getChangeHandler(attrName) {
     return 'on' + attrName.charAt(0).toUpperCase() + attrName.slice(1) + 'Change';
 }
 
-export function addAttribute(classObject, name, propType, defaultValue) {
-    classObject.prototype[definedAttributes] = classObject.prototype[definedAttributes] || {};
-    classObject.prototype[definedAttributes][name] = true;
+export function addAttribute(prototype, name, propType, defaultValue) {
+    const constructor = prototype.constructor;
+    prototype[definedAttributes] = prototype[definedAttributes] || {};
+    prototype[definedAttributes][name] = true;
     if (propType) {
-        classObject.propTypes = classObject.propTypes || {};
-        classObject.propTypes[name] = propType;
+        constructor.propTypes = constructor.propTypes || {};
+        constructor.propTypes[name] = propType;
     }
     if (defaultValue !== undefined) {
-        classObject.defaultProps = classObject.defaultProps || {};
-        classObject.defaultProps[name] = defaultValue;
+        constructor.defaultProps = constructor.defaultProps || {};
+        constructor.defaultProps[name] = defaultValue;
     }
 }
