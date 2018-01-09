@@ -17,7 +17,8 @@ function flatten(arr) {
 
 function instantiateContent(content, context) {
     try {
-        return new content.type(content.props, context);
+        let ContentClass = content.type;
+        return new ContentClass(content.props, context);
     }
     catch (e) {
         console.error(`Unexpected virtual type: ${content.type}. You cannot use concrete HTML tags in a virtual component - all components must themselves be virtual`);
