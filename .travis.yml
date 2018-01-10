@@ -6,13 +6,12 @@ addons:
   firefox: latest
 
 cache:
-  directories:
-    - $HOME/.npm
+  yarn: true
 
 before_script:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
 
 script:
-  - npm run linter
-  - npm run test
+  - yarn run linter
+  - yarn run test
