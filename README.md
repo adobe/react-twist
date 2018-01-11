@@ -251,17 +251,39 @@ At a first glance, Twist looks very similar to MobX. They both have the concept 
 2. React-Twist is lighter-weight than MobX. We've focused on performance, which means there's less magic under the hood. For example, an `ObservableArray` in React-Twist is just a thin wrapper over an array -- we don't try to simulate the array index operator (you write `a.at(i)` rather than `a[i]`), and elements of the array are not recursively converted into observables.
 
 
-## Usage
+## Getting Started
 
-To use this module, add `@twist/react` and `@twist/core` to your `package.json`. If you're using webpack, you then need to add the following to your webpack configuration (`webpack.config.js`):
+To get started with a new project, you'll first need to install the following (via NPM or Yarn):
 
-```jsx
-const ReactTwistWebpackPlugin = require('@twist/react-webpack-plugin');
+* `@twist/core` - This includes support for stores, data binding, and application state management.
+* `@twist/react` - The React implementation of Twist components.
+* `@twist/react-webpack-plugin` - A [webpack](https://webpack.js.org/) plugin that compiles Twist files (Twist has its own Babel transform that runs before React's).
 
-// Add the plugin to your Webpack configuration:
-plugins: [
-    new ReactTwistWebpackPlugin()
-]
+If you're not using webpack, you can also get hold of the Babel configuration directly, using [`@twist/configuration`](https://github.com/adobe/twist-configuration) (this is done automatically by the webpack plugin).
+
+After that, the only thing you need is a `.twistrc` file in the root of your project, that tells Twist which libraries to include (this is also used by the [Twist ESlint plugin](https://github.com/adobe/eslint-plugin-twist)). There are a number of advanced options, but to get up and running, you just need to tell Twist that you're using React-Twist:
+
+```json
+{
+    "libraries": [
+        "@twist/react"
+    ]
+}
+```
+
+In your `webpack.conf.js` you can now include the React Twist plugin - by default this will compile all files that end in `.jsx` with Twist and React:
+
+```js
+const ReactTwistPlugin = require('@twist/react-webpack-plugin');
+
+module.exports = {
+    ...
+    plugins: [
+        new ReactTwistPlugin(),
+        ...
+    ],
+    ...
+};
 ```
 
 ## Example
@@ -269,6 +291,8 @@ plugins: [
 To play with the example in this repo, run:
 
 ```
-npm install
-npm run watch
+yarn install
+yarn run watch
 ```
+
+Then go to `http://localhost:9000/` in your browser.
