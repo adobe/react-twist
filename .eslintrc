@@ -45,7 +45,6 @@
         // Semantic rules
         "eqeqeq": "error",
         "new-cap": [ "error", { "capIsNew": false } ],
-        "constructor-super": "off", // Remove once twist plugin has rule for this
 
         // Code cleanliness
         "no-console": [ "error", { "allow": ["warn", "error"] } ]  // Just prevent console.log
