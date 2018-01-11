@@ -2,18 +2,18 @@
 # yarn lockfile v1
 
 
-"@twist/babel-plugin-transform-react@adobe/babel-plugin-transform-react-twist":
+"@twist/babel-plugin-transform-react@0.1.0":
   version "0.1.0"
-  resolved "git+ssh://git@github.com/adobe/babel-plugin-transform-react-twist.git#ded4204a13bfa698f1bb44413489d44b45f62c37"
+  resolved "https://registry.yarnpkg.com/@twist/babel-plugin-transform-react/-/babel-plugin-transform-react-0.1.0.tgz#2f0255e249b4ee362f849e99cd6a035ae58eb844"
   dependencies:
-    "@twist/babel-plugin-transform" adobe/babel-plugin-transform-twist
+    "@twist/babel-plugin-transform" "0.1.0"
     babel-core "^6.26.0"
     babel-template "^6.26.0"
     babel-types "^6.26.0"
 
-"@twist/babel-plugin-transform@adobe/babel-plugin-transform-twist":
+"@twist/babel-plugin-transform@0.1.0":
   version "0.1.0"
-  resolved "git+ssh://git@github.com/adobe/babel-plugin-transform-twist.git#e1492985805ad8416cf080209fa23f5277bb83aa"
+  resolved "https://registry.yarnpkg.com/@twist/babel-plugin-transform/-/babel-plugin-transform-0.1.0.tgz#fffad1c835916e1cd1bb387d0cdf94b1a70f0ed4"
   dependencies:
     babel-core "^6.26.0"
     babel-helper-module-imports "^7.0.0-beta.3"
@@ -32,11 +32,11 @@
     babel-types "^6.26.0"
     recast "^0.12.9"
 
-"@twist/configuration@adobe/twist-configuration":
+"@twist/configuration@0.1.0":
   version "0.1.0"
-  resolved "git+ssh://git@github.com/adobe/twist-configuration.git#1f93abd710c0b69a714d3f048485a79be0082e0f"
+  resolved "https://registry.yarnpkg.com/@twist/configuration/-/configuration-0.1.0.tgz#9813d37d715e503233faf1733f8a1f5b58628a08"
   dependencies:
-    "@twist/babel-plugin-transform" adobe/babel-plugin-transform-twist
+    "@twist/babel-plugin-transform" "0.1.0"
     babel-core "6.25.0"
     babel-plugin-check-es2015-constants "6.22.0"
     babel-plugin-module-resolver "2.7.1"
@@ -77,23 +77,23 @@
     fast-async "6.3.0"
     strip-json-comments "^2.0.1"
 
-"@twist/core@adobe/twist":
+"@twist/core@^0.1.0":
   version "0.1.0"
-  resolved "git+ssh://git@github.com/adobe/twist.git#c307b9d2205cbb3601d858766c1c8532d7e97c48"
+  resolved "https://registry.yarnpkg.com/@twist/core/-/core-0.1.0.tgz#079dac1b81da61c9406805fb4b744b0c5195cdcd"
 
-"@twist/eslint-plugin-core@adobe/eslint-plugin-twist":
-  version "0.1.0"
-  resolved "git+ssh://git@github.com/adobe/eslint-plugin-twist.git#bc505a43430d37fd012553c84b73c2344769d261"
+"@twist/eslint-plugin-core@^0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@twist/eslint-plugin-core/-/eslint-plugin-core-0.1.2.tgz#6b64e40bffb632be7296d5e0e4c217b641282d5e"
   dependencies:
-    "@twist/configuration" adobe/twist-configuration
+    "@twist/configuration" "0.1.0"
     requireindex "1.1.0"
 
-"@twist/react-webpack-plugin@adobe/react-twist-webpack-plugin":
-  version "0.0.1"
-  resolved "git+ssh://git@github.com/adobe/react-twist-webpack-plugin.git#e8a7c82250031d88df75079c654921630dbc662b"
+"@twist/react-webpack-plugin@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@twist/react-webpack-plugin/-/react-webpack-plugin-0.1.0.tgz#3525981f40f8c06fdf6edc3aca56026d18af254c"
   dependencies:
-    "@twist/babel-plugin-transform-react" adobe/babel-plugin-transform-react-twist
-    "@twist/configuration" adobe/twist-configuration
+    "@twist/babel-plugin-transform-react" "0.1.0"
+    "@twist/configuration" "0.1.0"
     babel-loader "^7.1.2"
     thread-loader "^1.1.2"
 

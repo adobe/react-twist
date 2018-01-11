@@ -12,9 +12,19 @@
     "linter": "eslint --ext .js,.jsx .",
     "test": "karma start --browsers Firefox --single-run"
   },
+  "dependencies": {
+    "babel-plugin-transform-react-display-name": "^6.25.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "prop-types": "^15.6.0",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0"
+  },
+  "peerDependencies": {
+    "@twist/core": "^0.1.0"
+  },
   "devDependencies": {
     "@twist/core": "^0.1.0",
-    "@twist/eslint-plugin-core": "^0.1.0",
+    "@twist/eslint-plugin-core": "^0.1.2",
     "@twist/react-webpack-plugin": "^0.1.0",
     "autoprefixer": "6.4.0",
     "babel-eslint": "7.2.3",
@@ -39,15 +49,5 @@
     "style-loader": "0.13.2",
     "webpack": "3.4.1",
     "webpack-dev-server": "2.6.1"
-  },
-  "peerDependencies": {
-    "@twist/core": "^0.1.0"
-  },
-  "dependencies": {
-    "babel-plugin-transform-react-display-name": "^6.25.0",
-    "babel-plugin-transform-react-jsx": "^6.24.1",
-    "prop-types": "^15.6.0",
-    "react": "^16.0.0",
-    "react-dom": "^16.0.0"
   }
 }
