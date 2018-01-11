@@ -1,8 +1,8 @@
 # React-Twist: It's React... with a Twist!
 
-> IMPORTANT: This repo is still under development and doesn't work yet (we're pulling in code from different places and adjusting the structure).
+[![Build Status](https://travis-ci.org/adobe/react-twist.svg?branch=master)](https://travis-ci.org/adobe/react-twist)
 
-TODO: Introduction
+[Twist](https://github.com/adobe/twist) is a reactive state-management library for JavaScript applications, and React-Twist lets you use this on top of [React](https://reactjs.org/). In addition to data binding and state-management primitives, React-Twist also adds some syntax enhancements on top of React, designed to maximize your productivity!
 
 ## Features
 
@@ -133,8 +133,6 @@ The additional APIs that a component has access to are as follows:
 * `renderChildren([arg1, arg2])` lets you pass arguments to the child elements via the `as` attribute (e.g. `<MyComponent as={ x, y }/>{ x }{ y }</MyComponent>`). This is a shorthand for accepting a _function_ as the children prop, which will be invoked in order to pass in the given arguments.
 * `renderChildren(name)` lets you render only the children that are wrapped in a given namespaced tag -- `name` has to be namespaced, like `'dialog:footer'`. In this case, it would render the contents of `<dialog:footer></dialog:footer>` child elements. This is equivalent to looking for `this.props.dialog_footer` (Note that the `:` is converted to `_` because React doesn't support namespaced attributes).
 * `renderChildren(name, [arg1, arg2])` lets you render the contents of a namespaced tag, and also pass arguments to it -- e.g. `<dialog:footer as={ x, y }>{ x }{ y }</dialog:footer>`. This looks for the prop `this.props.dialog_footer` -- if it's a function, it will be invoked with the given arguments.
-
-> Note: `undeclaredAttributes()` was previously called `childAttributes()` -- the old API is still supported for now, but is deprecated.
 
 As an example, the following React-Twist code:
 

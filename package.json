@@ -13,9 +13,9 @@
     "test": "karma start --browsers Firefox --single-run"
   },
   "devDependencies": {
-    "@twist/core": "adobe/twist",
-    "@twist/eslint-plugin-core": "adobe/eslint-plugin-twist",
-    "@twist/react-webpack-plugin": "adobe/react-twist-webpack-plugin",
+    "@twist/core": "^0.1.0",
+    "@twist/eslint-plugin-core": "^0.1.0",
+    "@twist/react-webpack-plugin": "^0.1.0",
     "autoprefixer": "6.4.0",
     "babel-eslint": "7.2.3",
     "babel-plugin-istanbul": "4.1.5",
@@ -41,7 +41,7 @@
     "webpack-dev-server": "2.6.1"
   },
   "peerDependencies": {
-    "@twist/core": "adobe/twist"
+    "@twist/core": "^0.1.0"
   },
   "dependencies": {
     "babel-plugin-transform-react-display-name": "^6.25.0",
