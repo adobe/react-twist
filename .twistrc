@@ -5,6 +5,6 @@
     "decorators": [
         "Attribute",
         [ "Component", { "inherits": "BaseComponent" } ],
-        [ "VirtualComponent", { "inherits": "BaseVirtualComponent" } ]
+        [ "VirtualComponent", { "export": "Component", "inherits": "BaseVirtualComponent" } ]
     ]
 }
