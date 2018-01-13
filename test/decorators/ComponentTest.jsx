@@ -59,6 +59,44 @@ describe('@Component decorator', () => {
         assert.equal(textElement.textContent, 'Bob');
 
         // Should update when we modify the observable
+        state.name = 'John';
+        state.name = 'Dave';
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Dave');
+    });
+
+    it('Nested @Component passing data via this.children with an @Observable that updates', () => {
+
+        class State {
+            @Observable name = 'Bob';
+        }
+        let state = new State;
+
+        let textElement;
+
+        @Component({ fork: true })
+        class MyNestedComponent {
+            @Attribute name;
+
+            render() {
+                return <div ref={ textElement }>{ this.children }</div>;
+            }
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            @Attribute name;
+
+            render() {
+                return <MyNestedComponent>{ state.name }</MyNestedComponent>;
+            }
+        }
+
+        // Attribute should be rendered in DOM:
+        render(<MyComponent name="Bob" />);
+        assert.equal(textElement.textContent, 'Bob');
+
+        // Should update when we modify the observable
         state.name = 'Dave';
         TaskQueue.run();
         assert.equal(textElement.textContent, 'Dave');

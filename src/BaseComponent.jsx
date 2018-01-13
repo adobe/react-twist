@@ -19,7 +19,7 @@ import { definedAttributes, getEventHandler } from './internal/AttributeUtils';
 let BinderRecordChange = Binder.recordChange;
 let BinderRecordEvent = Binder.recordEvent;
 
-let scope = Symbol('scope');
+let _scope = Symbol('scope');
 
 export default class Component extends React.PureComponent {
 
@@ -91,17 +91,17 @@ export default class Component extends React.PureComponent {
         };
 
         // Handle scope
-        this[scope] = this.context && this.context.scope;
+        this[_scope] = this.context && this.context.scope;
         if (this.fork) {
-            this[scope] = this.link(this[scope] ? this[scope].fork() : new Scope);
+            this[_scope] = this.link(this[_scope] ? this[_scope].fork() : new Scope);
             let originalGetChildContext = this.getChildContext && this.getChildContext.bind(this);
             this.getChildContext = () => {
                 let context = originalGetChildContext ? originalGetChildContext() : {};
-                context.scope = this[scope];
+                context.scope = this[_scope];
                 return context;
             };
         }
-        else if (!this[scope]) {
+        else if (!this[_scope]) {
             // Note: We don't error here, because sometimes people decorate a class that's not a component with @Component.
             // If scope is actually used, there will still be an error further down the line, but this warning should help explain it!
             console.warn('A top-level component was instantiated without a forked scope - please change to @Component({ fork: true })');
@@ -120,7 +120,7 @@ export default class Component extends React.PureComponent {
      * Special getter for accessing scope
      */
     get scope() {
-        return this[scope];
+        return this[_scope];
     }
 
     /**

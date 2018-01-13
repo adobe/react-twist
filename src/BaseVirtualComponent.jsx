@@ -73,6 +73,12 @@ const _dirty = Symbol('dirty');
 const _queuedUpdate = Symbol('queuedUpdate');
 const _items = Symbol('items');
 const _virtualRender = Symbol('virtualRender');
+const _linked = Symbol('linked');
+
+class LinkedData {
+    // We have to put this in an object because decorators on [] properties don't yet work (we want linked data to be a symbol)
+    @Observable component;
+}
 
 /**
  * A Virtual Component is a special type of component that doesn't render anything to the DOM, but instead exposes a
@@ -84,6 +90,7 @@ export default class BaseVirtualComponent {
     [_dirty] = false;
     [_queuedUpdate] = false;
     [_items] = [];
+    [_linked] = new LinkedData;
 
     /**
      * Override the React forceUpdate so we do a virtual render (this throttles the rendering to the task queue)
@@ -136,10 +143,9 @@ export default class BaseVirtualComponent {
             }
             if (item && (propsDiffer(content.props, item.props) || propsDiffer(childContext, item.context))) {
                 item.componentWillUpdate(content.props, childContext);
-                item.forceUpdate();
                 item.props = content.props;
                 item.context = childContext;
-                item[_virtualRender]();
+                item.forceUpdate();
             }
             if (!item) {
                 items[i] = this.link(instantiateContent(content, childContext));
@@ -159,11 +165,21 @@ export default class BaseVirtualComponent {
     }
 
     /**
+     * Overrides the renderChildren() of BaseComponent, so it can inject the children from the
+     * linked component, if it's linked!
+     */
+    renderChildren(name, args) {
+        return this[_linked].component
+            ? this[_linked].component.renderChildren(name, args)
+            : super.renderChildren(name, args);
+    }
+
+    /**
      * By default we just render whatever children were passed in - this can be overridden,
      * e.g. if conditional logic is needed or you want to add additional virtual components
      */
     render() {
-        return this.props.children || null;
+        return this.renderChildren() || null;
     }
 
     /**
@@ -190,10 +206,9 @@ export default class BaseVirtualComponent {
         if (!(component instanceof BaseComponent)) {
             throw new Error('@VirtualComponent.linkToComponent() expects an @Component as its argument');
         }
-        this.watch(() => component.children, newChildren => {
-            this.props = { children: newChildren };
-            this.forceUpdate();
-        });
+
+        this[_linked].component = component;
+        this.forceUpdate();
         return component.link(this);
     }
 

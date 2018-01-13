@@ -14,7 +14,7 @@
 /* global describe it */
 import assert from 'assert';
 import { renderIntoDocument as render } from 'react-dom/test-utils';
-import { TaskQueue } from '@twist/core';
+import { TaskQueue, ObservableArray } from '@twist/core';
 
 /**
     Classes used by the tests
@@ -33,11 +33,12 @@ class List {
 class View {
 
     @Attribute elements;
+    @Attribute name;
 
     constructor() {
         super();
         // Virtual item
-        this.data = new List().linkToComponent(this);
+        this.data = new List({}).linkToComponent(this);
     }
 
     compute() {
@@ -48,9 +49,11 @@ class View {
 
     render() {
         return <g>
+            <div>{ this.name }</div>
             <div ref={ this.elements[0] }>{ this.data.children.length }</div>
             <div ref={ this.elements[1] }>{ this.data.hasChildren ? 'yes' : 'no' }</div>
             <div ref={ this.elements[2] }>{ this.compute() }</div>
+            { this.props.children }
         </g>;
     }
 }
@@ -68,10 +71,10 @@ describe('@VirtualComponent decorator', () => {
     });
 
     it('linkToComponent requires a component', () => {
-        assert.throws(() => new List().linkToComponent(), /@VirtualComponent.linkToComponent\(\) expects an @Component as its argument/);
+        assert.throws(() => new List({}).linkToComponent(), /@VirtualComponent.linkToComponent\(\) expects an @Component as its argument/);
     });
 
-    it('Basic @VirtualComponent - can be used in a normal component', () => {
+    it('@VirtualComponent should render and be accessible to linked component', () => {
         let elements = [];
 
         render(<View elements={ elements }>
@@ -86,6 +89,47 @@ describe('@VirtualComponent decorator', () => {
             '5',
             'yes',
             'A,B,D1,D2,D3'
+        ]);
+    });
+
+    it('@VirtualComponent should dynamically update', () => {
+        let elements = [];
+
+        class Data {
+            @Observable static showB = true;
+            @Observable static showC = false;
+            static items = new ObservableArray([ 1, 2, 3 ]);
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            render() {
+                return <View elements={ elements } name={ Data.items.length }>
+                    <Item name="A" />
+                    <if condition={ Data.showB }><Item name="B" /></if>
+                    <if condition={ Data.showC }><Item name="C" /></if>
+                    <repeat for={ x in Data.items }>
+                        <Item name={ 'D' + x } />
+                    </repeat>
+                </View>;
+            }
+        }
+
+        render(<MyComponent />);
+        assert.deepEqual(elements.map(e => e.textContent), [
+            '5',
+            'yes',
+            'A,B,D1,D2,D3'
+        ]);
+
+        Data.showC = true;
+        Data.items.splice(1, 0, 4);
+        TaskQueue.run();
+
+        assert.deepEqual(elements.map(e => e.textContent), [
+            '7',
+            'yes',
+            'A,B,C,D1,D4,D2,D3'
         ]);
     });
 
