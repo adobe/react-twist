@@ -25,7 +25,7 @@ describe('@Attribute decorator', () => {
 
         @Component({ fork: true })
         class MyComponent {
-            @Attribute name = 'Bob';
+            @Attribute name = 'Bob' + '';
 
             render() {
                 return <div ref={ element => textElement = element }>{ this.name }</div>;
@@ -39,6 +39,39 @@ describe('@Attribute decorator', () => {
         // Default value can be overriden:
         render(<MyComponent name="Fred" />);
         assert.equal(textElement.textContent, 'Fred');
+    });
+
+    it('@Attribute should take default value as an expression', () => {
+
+        let textElement;
+
+        @Component({ fork: true })
+        class MyComponent {
+            @Attribute name = 'Bob' + (() => '\'s your uncle')();
+
+            render() {
+                return <div ref={ textElement }>{ this.name }</div>;
+            }
+        }
+
+        // Default value should be rendered in DOM:
+        render(<MyComponent />);
+        assert.equal(textElement.textContent, 'Bob\'s your uncle');
+    });
+
+    it('@Attribute should give warning if you use an expression that contains this as the default value', () => {
+
+        sinon.spy(console, 'warn');
+
+        @Component({ fork: true })
+        class MyComponent {
+            @Attribute name = 'Bob'
+            @Attribute address = this.name + '_address';
+        }
+
+        assert(MyComponent);
+        assert(console.warn.calledWith('Ignoring default value for attribute `address` of `MyComponent` - default attribute values cannot reference `this` in React, since they\'re defined on the class.'));
+        console.warn.restore();
     });
 
     it('@Attribute should take propType', () => {

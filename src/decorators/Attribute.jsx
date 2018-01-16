@@ -33,7 +33,8 @@ export default DecoratorUtils.makePropertyDecorator((target, property, descripto
         // We can't have defaultProps that depend on the instance of the class.
         // This evaluates with `this` being undefined, so we can detect and warn if it depends on the instance.
         try {
-            defaultValue = descriptor.initializer();
+            // We need to make sure that `this` is undefined for the initializer, so we can catch this error
+            defaultValue = descriptor.initializer.apply();
         }
         catch(e) {
             console.warn(`Ignoring default value for attribute \`${property}\` of \`${target.constructor.name}\` - default attribute values cannot reference \`this\` in React, since they're defined on the class.`);
