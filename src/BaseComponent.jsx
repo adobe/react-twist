@@ -21,6 +21,9 @@ let BinderRecordEvent = Binder.recordEvent;
 
 let _scope = Symbol('scope');
 
+/** private **/
+export let _originalRender = Symbol('originalRender');
+
 export default class Component extends React.PureComponent {
 
     constructor(props, context) {
@@ -32,6 +35,7 @@ export default class Component extends React.PureComponent {
         }
 
         // Swap out the render function, so we can bind to it (telling React to re-render when it needs to)
+        this[_originalRender] = this.render;
         let originalRender = this.render && this.render.bind(this);
         let binder;
         this.render = () => {

@@ -13,6 +13,7 @@
 
 import { TaskQueue } from '@twist/core';
 import BaseComponent from './BaseComponent';
+import { _originalRender } from './BaseComponent';
 
 function isNullOrWhitespace(item) {
     return !item || /^\s+$/.test(item);
@@ -91,6 +92,18 @@ export default class BaseVirtualComponent {
     [_queuedUpdate] = false;
     [_items] = [];
     [_linked] = new LinkedData;
+
+    constructor() {
+        super();
+
+        // Prevent overriding the render() method
+        if (this[_originalRender] !== BaseVirtualComponent.prototype.render) {
+            console.log(this[_originalRender]);
+            console.log( BaseVirtualComponent.prototype.render)
+            console.log('*****')
+            throw new Error('Virtual components do not support custom render() implementations. Instead, use a normal component that renders virtual components.');
+        }
+    }
 
     /**
      * Override the React forceUpdate so we do a virtual render (this throttles the rendering to the task queue)
@@ -175,8 +188,11 @@ export default class BaseVirtualComponent {
     }
 
     /**
-     * By default we just render whatever children were passed in - this can be overridden,
-     * e.g. if conditional logic is needed or you want to add additional virtual components
+     * Virtual components always just render their children (they're nodes in the virtual tree).
+     * If you need custom behavior (e.g. injecting other virtual nodes), you can write a real component that
+     * renders virtual components.
+     *
+     * If you try to override this, you'll get an error.
      */
     render() {
         return this.renderChildren() || null;
@@ -220,19 +236,4 @@ export default class BaseVirtualComponent {
         return flatten(this[_items], isNullOrNotVirtual);
     }
 
-    /**
-     * Shorthand for iterating over the children of the virtual component.
-     * @param {function} callback Function to call on each child.
-     */
-    forEach(fn) {
-        this.children.forEach(fn);
-    }
-
-    /**
-     * Whether or not the virtual component has any children (if false, it's a leaf node).
-     * @type {Boolean}
-     */
-    get hasChildren() {
-        return this.children.length > 0;
-    }
 }

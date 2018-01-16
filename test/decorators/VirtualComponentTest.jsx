@@ -43,7 +43,7 @@ class View {
 
     compute() {
         let x = [];
-        this.data.forEach(item => x.push(item.name));
+        this.data.children.forEach(item => x.push(item.name));
         return x.join(',');
     }
 
@@ -51,7 +51,7 @@ class View {
         return <g>
             <div>{ this.name }</div>
             <div ref={ this.elements[0] }>{ this.data.children.length }</div>
-            <div ref={ this.elements[1] }>{ this.data.hasChildren ? 'yes' : 'no' }</div>
+            <div ref={ this.elements[1] }>{ this.data.children.length > 0 ? 'yes' : 'no' }</div>
             <div ref={ this.elements[2] }>{ this.compute() }</div>
             { this.props.children }
         </g>;
@@ -72,6 +72,16 @@ describe('@VirtualComponent decorator', () => {
 
     it('linkToComponent requires a component', () => {
         assert.throws(() => new List({}).linkToComponent(), /@VirtualComponent.linkToComponent\(\) expects an @Component as its argument/);
+    });
+
+    it('@VirtualComponent cannot have custom render() function', () => {
+        @VirtualComponent
+        class RenderedVComponent {
+            render() {
+                return null;
+            }
+        }
+        assert.throws(() => new RenderedVComponent({}), /Virtual components do not support custom render\(\) implementations. Instead, use a normal component that renders virtual components./);
     });
 
     it('@VirtualComponent should render and be accessible to linked component', () => {
