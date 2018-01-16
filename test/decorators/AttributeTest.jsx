@@ -14,7 +14,7 @@
 /* global describe it */
 import assert from 'assert';
 import sinon from 'sinon';
-import { renderIntoDocument as render } from 'react-dom/test-utils';
+import { renderIntoDocument as render, Simulate } from 'react-dom/test-utils';
 import PropTypes from 'prop-types';
 
 describe('@Attribute decorator', () => {
@@ -80,6 +80,69 @@ describe('@Attribute decorator', () => {
         // Should render title as Bob, even though passed as name
         render(<MyComponent name="Bob" />);
         assert.equal(textElement.textContent, 'Bob');
+    });
+
+    it('@Attribute can have its value set, and calls event property', () => {
+
+        @Component({ fork: true })
+        class MyComponent {
+            @Attribute name = 'Bob';
+            @Attribute address = 'Unknown';
+
+            render() {
+                return null;
+            }
+        }
+
+        let comp;
+        let changeCallback = sinon.spy();
+        render(<MyComponent ref={ comp } onNameChange={ changeCallback } />);
+
+        sinon.spy(console, 'warn');
+
+        // Changing an attribute that doesn't have an event should give a warning (and not actually change it)
+        comp.address = 'New Address';
+        assert.equal(comp.address, 'Unknown');
+        assert(console.warn.calledWith('Attribute `address` of `MyComponent` was modified, but no `onAddressChange` attribute was specified. If you want two-way binding, make sure to use `bind:address` as the attribute name.'));
+        console.warn.restore();
+
+        // Changing an attribute that _does_ have an event prop should call that function
+        comp.name = 'New Name';
+        assert(changeCallback.calledWith('New Name'));
+    });
+
+    it('@Attribute works with two-way binding', () => {
+
+        let textElement;
+        let parentComp;
+
+        @Component({ fork: true })
+        class MyComponent {
+            @Attribute name = 'Bob';
+
+            render() {
+                return <div ref={ textElement } onClick={ () => this.name += '_' }>{ this.name }</div>;
+            }
+        }
+
+        @Component({ fork: true })
+        class MyContainer {
+
+            @Observable name = 'Dave'
+
+            render() {
+                return <MyComponent bind:name={ this.name } />;
+            }
+        }
+
+        render(<MyContainer ref={ parentComp } />);
+        assert.equal(textElement.textContent, 'Dave');
+        assert.equal(parentComp.name, 'Dave');
+
+        // Changing the name in the child, should propagate to the parent, since we're using "bind:name"
+        Simulate.click(textElement);
+        assert.equal(textElement.textContent, 'Dave_');
+        assert.equal(parentComp.name, 'Dave_');
     });
 
 });

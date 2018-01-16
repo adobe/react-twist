@@ -36,29 +36,13 @@ export default DecoratorUtils.makePropertyDecorator((target, property, descripto
             defaultValue = descriptor.initializer();
         }
         catch(e) {
-            console.warn(`Ignoring default value for attribute "${property}" of ${target.name} - default attribute values cannot reference "this" in React, since they're defined on the class.`);
+            console.warn(`Ignoring default value for attribute \`${property}\` of \`${target.constructor.name}\` - default attribute values cannot reference \`this\` in React, since they're defined on the class.`);
         }
     }
 
     addAttribute(target, property, propType, defaultValue);
 
-    if (alias) {
-        addAttribute(target, alias, propType, defaultValue);
-        Object.defineProperty(target, alias, {
-            configurable: true,
-            enumerable: false,
-            get() {
-                BinderRecordEvent(this, property);
-                return this.props[property];
-            },
-            set(val) {
-                // TODO: We should have an option to control whether you want this, e.g. via the prop type
-                this.props[eventProperty] && this.props[eventProperty](val);
-            }
-        });
-    }
-
-    return {
+    let attributeProperty = {
         configurable: true,
         enumerable: false,
         get() {
@@ -66,13 +50,20 @@ export default DecoratorUtils.makePropertyDecorator((target, property, descripto
             return this.props[property];
         },
         set(val) {
-            if (this.props[eventProperty]) {
+            if (typeof this.props[eventProperty] === 'function') {
                 // TODO: We should have an option to control whether you want this, e.g. via the prop type
                 this.props[eventProperty](val);
             }
             else {
-                console.warn(`Attribute "${property}" of ${target.name} was modified, but no "${eventProperty}" attribute was specified. If you want two-way binding, make sure to use "bind:${property}" as the attribute name.`);
+                console.warn(`Attribute \`${property}\` of \`${target.constructor.name}\` was modified, but no \`${eventProperty}\` attribute was specified. If you want two-way binding, make sure to use \`bind:${property}\` as the attribute name.`);
             }
         }
     };
+
+    if (alias) {
+        addAttribute(target, alias, propType, defaultValue);
+        Object.defineProperty(target, alias, attributeProperty);
+    }
+
+    return attributeProperty;
 });
