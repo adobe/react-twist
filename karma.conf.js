@@ -36,7 +36,7 @@ module.exports = function(config) {
             dir: 'testing/',
             reporters: [
                 { type: 'html', subdir: 'coverage' },
-                { type: 'text-summary' }
+                { type: 'text' }
             ],
         },
 

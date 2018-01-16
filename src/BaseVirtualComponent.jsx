@@ -11,8 +11,39 @@
  *
  */
 
-function flatten(arr) {
-    return arr.filter(content => !/^\s+$/.test(content)).reduce((a, b) => a.concat(b instanceof Array ? flatten(b) : b), []);
+import { TaskQueue } from '@twist/core';
+import BaseComponent from './BaseComponent';
+import { _originalRender } from './BaseComponent';
+
+function isNullOrWhitespace(item) {
+    return !item || /^\s+$/.test(item);
+}
+
+function isNullOrNotVirtual(item) {
+    return !item || !(item instanceof BaseVirtualComponent);
+}
+
+function flatten(arr, skipTest, flattenedArr) {
+    for (let i = 0; i < arr.length; i++) {
+        let item = arr[i];
+        let shouldIgnore = skipTest(item);
+        let isArray = Array.isArray(item);
+
+        if (!flattenedArr && (shouldIgnore || isArray)) {
+            // Optimisation: Only create a new array when we need to
+            flattenedArr = arr.slice(0, i);
+        }
+
+        if (flattenedArr) {
+            if (isArray) {
+                flatten(item, skipTest, flattenedArr);
+            }
+            else if (!shouldIgnore) {
+                flattenedArr.push(item);
+            }
+        }
+    }
+    return flattenedArr || arr;
 }
 
 function instantiateContent(content, context) {
@@ -39,58 +70,82 @@ function propsDiffer(propsA, propsB) {
     return true;
 }
 
+const _dirty = Symbol('dirty');
+const _queuedUpdate = Symbol('queuedUpdate');
+const _items = Symbol('items');
+const _virtualRender = Symbol('virtualRender');
+const _linked = Symbol('linked');
+
+class LinkedData {
+    // We have to put this in an object because decorators on [] properties don't yet work (we want linked data to be a symbol)
+    @Observable component;
+}
+
+/**
+ * A Virtual Component is a special type of component that doesn't render anything to the DOM, but instead exposes a
+ * tree of nodes in JavaScript. It still has a render function, but it's not rendered by ReactDOM.
+ */
 @Component({ fork: true })
 export default class BaseVirtualComponent {
 
-    @Attribute _index;
+    [_dirty] = false;
+    [_queuedUpdate] = false;
+    [_items] = [];
+    [_linked] = new LinkedData;
 
-    _dirty = true;
+    constructor() {
+        super();
 
-    constructor(props, context) {
-        super(props, context);
-        this.init && this.init();
+        // Prevent overriding the render() method
+        if (this[_originalRender] !== BaseVirtualComponent.prototype.render) {
+            throw new Error('Virtual components do not support custom render() implementations. Instead, use a normal component that renders virtual components.');
+        }
     }
 
+    /**
+     * Override the React forceUpdate so we do a virtual render (this throttles the rendering to the task queue)
+     * @private
+     */
     forceUpdate() {
-        this._dirty = true;
-        this.doUpdate();
-    }
-
-    @Task
-    doUpdate() {
-        // TODO: Avoid too many renders
-        if (this._dirty) {
-            this.virtualRender();
-        }
-    }
-
-    virtualRender() {
-        if (!this._dirty) {
+        if (this[_queuedUpdate]) {
+            this[_dirty] = true;
             return;
         }
 
-        this._dirty = false;
+        this[_virtualRender]();
+        this[_queuedUpdate] = true;
 
-        let contents = this.render();
+        TaskQueue.push(() => {
+            if (this[_dirty] && !this.isDisposed) {
+                this[_virtualRender]();
+                this[_dirty] = false;
+            }
+            this[_queuedUpdate] = false;
+        });
+    }
+
+    /**
+     * Virtual rendering uses the results of render function (a JSON structure describing the child nodes), and
+     * renders them virtually - this just means instantiating the virtual nodes (or updating them if props changed)
+     * so we have a virtual tree. DOM nodes (like <div> etc) are not allowed in the virtual tree.
+     * @private
+     */
+    [_virtualRender]() {
+        let contents = this.render() || [];
+        let items = this[_items];
         let childContext = this.getChildContext();
-
-        this._items = this._items || [];
-
-        if (contents === null) {
-            return;
-        }
 
         if (!(contents instanceof Array)) {
             contents = [ contents ];
         }
 
-        // Sometimes the array can contain other arrays: Need to flatten it out:
-        // TODO We could do this check more efficiently so we don't need to create a new array if not necessary
-        contents = flatten(contents);
+        // Sometimes the array can contain other arrays, so we need to flatten it out
+        // (this also strips out any null elements)
+        contents = flatten(contents, isNullOrWhitespace);
 
         for (let i = 0; i < contents.length; i++) {
             let content = contents[i];
-            let item = this._items[i];
+            let item = items[i];
 
             if (item && !(item instanceof content.type)) {
                 this.unlink(item);
@@ -98,70 +153,84 @@ export default class BaseVirtualComponent {
             }
             if (item && (propsDiffer(content.props, item.props) || propsDiffer(childContext, item.context))) {
                 item.componentWillUpdate(content.props, childContext);
-                item.forceUpdate();
                 item.props = content.props;
                 item.context = childContext;
-                item.virtualRender();
+                item.forceUpdate();
             }
             if (!item) {
-                this._items[i] = this.link(instantiateContent(content, childContext));
-                this._items[i]._parent = this;
-                this._items[i].virtualRender();
+                items[i] = this.link(instantiateContent(content, childContext));
+                items[i]._parent = this;
+                items[i][_virtualRender]();
             }
         }
-
-        // Trigger the layout on us, or whoever
-        let layoutContainer = this;
-        while (layoutContainer && !layoutContainer.setChildNeedsLayout) {
-            layoutContainer = layoutContainer._parent;
+        for (let i = contents.length; i < items.length; i++) {
+            let item = items[i];
+            if (item) {
+                this.unlink(item);
+            }
         }
-        layoutContainer && layoutContainer.setChildNeedsLayout();
+        items.length = contents.length;
+
+        // TODO: Trigger an event so this can be extended
     }
 
+    /**
+     * Overrides the renderChildren() of BaseComponent, so it can inject the children from the
+     * linked component, if it's linked!
+     */
+    renderChildren(name, args) {
+        return this[_linked].component
+            ? this[_linked].component.renderChildren(name, args)
+            : super.renderChildren(name, args);
+    }
+
+    /**
+     * Virtual components always just render their children (they're nodes in the virtual tree).
+     * If you need custom behavior (e.g. injecting other virtual nodes), you can write a real component that
+     * renders virtual components.
+     *
+     * If you try to override this, you'll get an error.
+     */
     render() {
-        return this.props.children || null;
+        return this.renderChildren() || null;
     }
 
-    get children() {
-        let items;
-        for (let i = 0; i < this._items.length; i++) {
-            let item = this._items[i];
-            if (!item.layout && !items) {
-                // Optimization so we only create a new array if we need to
-                items = this._items.slice(0, i);
-            }
-
-            if (items) {
-                // Not all items are actually virtual items, e.g. LazyItem - we need to skip over it
-                if (item.layout) {
-                    items.push(item);
-                }
-                else {
-                    items = items.concat(item.children);
-                }
-            }
+    /**
+     * This is the initialization code for a virtual component. Typically a virtual component exists
+     * alongside a concrete component, as a mechanism for configuring that component. For example,
+     * in a virtual scroller, the concrete component will render actual elements to the DOM (based on
+     * what's visible), but its children will be rendered to a virtual tree for doing the layout.
+     *
+     * A virtual component can't be rendered by ReactDOM, so instead, you need to pass the children
+     * of the concrete component to a virtual component, that will render it instead. You only need
+     * to call bindToComponent on the root virtual component - this just tells the virtual component
+     * to monitor the children of the given component, and render itself whenever they change.
+     *
+     * This method returns the virtual component, so that you can write (from a component):
+     *
+     * ```
+     * this.virtualComponent = new MyVirtualComponent().linkToComponent(this);
+     * ```
+     *
+     * @param {BaseComponent} component The component to bind to.
+     * @returns {BaseVirtualComponent} This virtual component.
+     */
+    linkToComponent(component) {
+        if (!(component instanceof BaseComponent)) {
+            throw new Error('@VirtualComponent.linkToComponent() expects an @Component as its argument');
         }
-        return items || this._items;
+
+        this[_linked].component = component;
+        this.forceUpdate();
+        return component.link(this);
     }
 
-    forEach(fn) {
-        this.children.forEach(fn);
-    }
-
-    any(fn) {
-        return this.children.some(fn);
-    }
-
-    map(fn) {
-        return this.children.map(fn);
-    }
-
-    filter(fn) {
-        return this.children.filter(fn);
-    }
-
-    get hasChildren() {
-        return this.children.length > 0;
+    /**
+     * The virtual children of the virtual component.
+     * @type {Array.<BaseVirtualComponent>}
+     */
+    get children() {
+        return flatten(this[_items], isNullOrNotVirtual);
     }
 
 }

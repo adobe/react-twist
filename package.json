@@ -11,6 +11,7 @@
     "watch": "webpack-dev-server --hot",
     "linter": "eslint --ext .js,.jsx .",
     "test": "karma start --browsers Firefox --single-run",
+    "test:watch": "karma start --browsers Firefox",
     "preversion": "npm run linter && npm run test",
     "postversion": "git push && git push --tags"
   },
