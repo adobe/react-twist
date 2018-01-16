@@ -98,9 +98,6 @@ export default class BaseVirtualComponent {
 
         // Prevent overriding the render() method
         if (this[_originalRender] !== BaseVirtualComponent.prototype.render) {
-            console.log(this[_originalRender]);
-            console.log( BaseVirtualComponent.prototype.render)
-            console.log('*****')
             throw new Error('Virtual components do not support custom render() implementations. Instead, use a normal component that renders virtual components.');
         }
     }
