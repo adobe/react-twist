@@ -183,4 +183,14 @@ describe('@Attribute decorator', () => {
         assert.equal(parentComp.name, 'Dave_');
     });
 
+    it('@Attribute should throw an error if used on a non-component', () => {
+
+        assert.throws(() => {
+            class Test {
+                @Attribute name;
+            }
+            new Test();
+        }, /@Attribute can only be used for properties on an @Component. `Test` is not an @Component./);
+    });
+
 });

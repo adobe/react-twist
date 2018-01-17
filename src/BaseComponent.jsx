@@ -21,6 +21,7 @@ let BinderRecordEvent = Binder.recordEvent;
 let noop = () => undefined;
 
 let _scope = Symbol('scope');
+let _props = Symbol('props');
 let _newProps = Symbol('newProps');
 
 /** private **/
@@ -36,10 +37,9 @@ function replaceExistingMethod(obj, name, newMethod) {
 
 export default class Component extends React.PureComponent {
 
-    @Observable props;
-
     constructor(props, context) {
         super(props, context);
+        this[_props] = props || {};
 
         if (!props || (!this.fork && !context)) {
             console.warn(`You must call super(props, context) from the constructor of a component -
@@ -144,12 +144,31 @@ export default class Component extends React.PureComponent {
     }
 
     /**
+     * Accessor for props - this is necessary for rendering to work if you access props directly in the renderer.
+     * However, normal @Attribute accessors don't go through here (they access the internal [_props] instead),
+     * so that the component doesn't need to re-render if a prop that it doesn't use changes.
+     *
+     * We encourage using @Attribute rather than accessing props directly, for these performance reasons.
+     * @type {object}
+     */
+    get props() {
+        Binder.active && BinderRecordEvent(this, 'props');
+        return this[_props];
+    }
+    set props(newProps) {
+        if (this[_props] !== newProps) {
+            this[_props] = newProps;
+            BinderRecordChange(this, 'props');
+        }
+    }
+
+    /**
      * Method for obtaining the current value of a prop - this is used by @Attribute so it can read the new
      * props immediately after componentWillUpdate (but before they've been set by React)
      * @private
      */
     [_getProp](name) {
-        return this[_newProps] ? this[_newProps][name] : this.props[name];
+        return this[_newProps] ? this[_newProps][name] : this[_props][name];
     }
 
     /**
@@ -182,7 +201,7 @@ export default class Component extends React.PureComponent {
         // React doesn't support namespaced tags/attributes, so need to strip out colons
         name = name.replace(/:/g, '_');
 
-        BinderRecordEvent(this,  'props.' + name);
+        Binder.active && BinderRecordEvent(this,  'props.' + name);
         let children = this.props[name];
 
         // Apply the arguments

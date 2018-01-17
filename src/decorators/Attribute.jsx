@@ -14,7 +14,7 @@
 // In React, @Attribute is just a getter over props
 
 import { addAttribute, getChangeHandler } from '../internal/AttributeUtils';
-import { _getProp } from '../BaseComponent';
+import { _getProp, default as BaseComponent } from '../BaseComponent';
 import { Binder } from '@twist/core';
 import DecoratorUtils from '@twist/core/src/internal/utils/DecoratorUtils';
 let BinderRecordEvent = Binder.recordEvent;
@@ -25,6 +25,10 @@ export default DecoratorUtils.makePropertyDecorator((target, property, descripto
         // Assume this is the alias, not a propType
         alias = propType;
         propType = undefined;
+    }
+
+    if (!(target instanceof BaseComponent)) {
+        throw new Error(`@Attribute can only be used for properties on an @Component. \`${target.constructor.name}\` is not an @Component.`);
     }
 
     const eventProperty = getChangeHandler(property);
@@ -48,7 +52,7 @@ export default DecoratorUtils.makePropertyDecorator((target, property, descripto
         configurable: true,
         enumerable: false,
         get() {
-            BinderRecordEvent(this, 'props.' + property);
+            Binder.active && BinderRecordEvent(this, 'props.' + property);
             return this[_getProp](property);
         },
         set(val) {
