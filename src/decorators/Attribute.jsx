@@ -14,6 +14,7 @@
 // In React, @Attribute is just a getter over props
 
 import { addAttribute, getChangeHandler } from '../internal/AttributeUtils';
+import { _getProp } from '../BaseComponent';
 import { Binder } from '@twist/core';
 import DecoratorUtils from '@twist/core/src/internal/utils/DecoratorUtils';
 let BinderRecordEvent = Binder.recordEvent;
@@ -48,12 +49,13 @@ export default DecoratorUtils.makePropertyDecorator((target, property, descripto
         enumerable: false,
         get() {
             BinderRecordEvent(this, 'props.' + property);
-            return this.props[property];
+            return this[_getProp](property);
         },
         set(val) {
-            if (typeof this.props[eventProperty] === 'function') {
+            let eventCallback = this[_getProp](eventProperty);
+            if (typeof eventCallback === 'function') {
                 // TODO: We should have an option to control whether you want this, e.g. via the prop type
-                this.props[eventProperty](val);
+                eventCallback(val);
             }
             else {
                 console.warn(`Attribute \`${property}\` of \`${target.constructor.name}\` was modified, but no \`${eventProperty}\` attribute was specified. If you want two-way binding, make sure to use \`bind:${property}\` as the attribute name.`);

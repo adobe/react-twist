@@ -18,13 +18,25 @@ import { definedAttributes, getEventHandler } from './internal/AttributeUtils';
 
 let BinderRecordChange = Binder.recordChange;
 let BinderRecordEvent = Binder.recordEvent;
+let noop = () => undefined;
 
 let _scope = Symbol('scope');
+let _newProps = Symbol('newProps');
 
 /** private **/
 export let _originalRender = Symbol('originalRender');
+/** private **/
+export let _getProp = Symbol('getProp');
+
+// Utility for hooking into existing methods
+function replaceExistingMethod(obj, name, newMethod) {
+    let originalMethod = obj[name] && obj[name].bind(obj);
+    obj[name] = newMethod(originalMethod || noop);
+}
 
 export default class Component extends React.PureComponent {
+
+    @Observable props;
 
     constructor(props, context) {
         super(props, context);
@@ -36,9 +48,8 @@ export default class Component extends React.PureComponent {
 
         // Swap out the render function, so we can bind to it (telling React to re-render when it needs to)
         this[_originalRender] = this.render;
-        let originalRender = this.render && this.render.bind(this);
         let binder;
-        this.render = () => {
+        replaceExistingMethod(this, 'render', originalRender => () => {
             if (!binder) {
                 // Create a new binder: This always executes the getter immediately, so we just read it back
                 // from the previousValue. For future updates, we'll get called when the binder is invalidated.
@@ -77,33 +88,46 @@ export default class Component extends React.PureComponent {
 
             // React forbids returning `undefined` from render; we must return null instead.
             return binder.previousValue !== undefined ? binder.previousValue : null;
-        };
+        });
 
-        // Swap out the componentDidUpdate:
-        let originalComponentDidUpdate = this.componentDidUpdate && this.componentDidUpdate.bind(this);
-        this.componentDidUpdate = (prevProps, ...args) => {
+        // Swap out the componentWillUpdate:
+        replaceExistingMethod(this, 'componentWillUpdate', originalMethod => (newProps, newState) => {
+            // We need to remember the new props while updating, because our Binder change events might
+            // trigger somebody to read an @Attribute, before React has set the new props - this is a bit ugly, but necessary.
+            // (Note, triggering the Binder changes on componentDidUpdate avoids this problem, but causes multiple renders for a single update).
+            this[_newProps] = newProps;
+
             for (let key in this.props) {
                 // We have to signal a change if any of the props change, so that any watches that depend on them will trigger!
-                if (this.props[key] !== prevProps[key]) {
+                if (this.props[key] !== newProps[key]) {
+                    BinderRecordChange(this, 'props.' + key);
+                }
+            }
+            for (let key in newProps) {
+                // Also check for new props that were added
+                if (!this.props.hasOwnProperty(key)) {
                     BinderRecordChange(this, 'props.' + key);
                 }
             }
 
-            if (originalComponentDidUpdate) {
-                originalComponentDidUpdate(prevProps, ...args);
-            }
-        };
+            originalMethod(newProps, newState);
+        });
+
+        // Swap out the componentDidUpdate, so we reset the newProps after they've been assigned
+        replaceExistingMethod(this, 'componentDidUpdate', originalMethod => (prevProps, prevState) => {
+            this[_newProps] = undefined;
+            originalMethod(prevProps, prevState);
+        });
 
         // Handle scope
         this[_scope] = this.context && this.context.scope;
         if (this.fork) {
             this[_scope] = this.link(this[_scope] ? this[_scope].fork() : new Scope);
-            let originalGetChildContext = this.getChildContext && this.getChildContext.bind(this);
-            this.getChildContext = () => {
-                let context = originalGetChildContext ? originalGetChildContext() : {};
+            replaceExistingMethod(this, 'getChildContext', originalMethod => () => {
+                let context = originalMethod() || {};
                 context.scope = this[_scope];
                 return context;
-            };
+            });
         }
         else if (!this[_scope]) {
             // Note: We don't error here, because sometimes people decorate a class that's not a component with @Component.
@@ -112,13 +136,20 @@ export default class Component extends React.PureComponent {
             console.warn(`\`${className}\` was instantiated at the top-level without a forked scope - please change to @Component({ fork: true })`);
         }
 
-        let originalComponentWillUnmount = this.componentWillUnmount && this.componentWillUnmount.bind(this);
-        this.componentWillUnmount = () => {
-            if (originalComponentWillUnmount) {
-                originalComponentWillUnmount();
-            }
+        // Make sure we dispose after unmounting
+        replaceExistingMethod(this, 'componentWillUnmount', originalMethod => () => {
+            originalMethod();
             this.dispose();
-        };
+        });
+    }
+
+    /**
+     * Method for obtaining the current value of a prop - this is used by @Attribute so it can read the new
+     * props immediately after componentWillUpdate (but before they've been set by React)
+     * @private
+     */
+    [_getProp](name) {
+        return this[_newProps] ? this[_newProps][name] : this.props[name];
     }
 
     /**

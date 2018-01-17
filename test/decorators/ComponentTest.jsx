@@ -70,6 +70,94 @@ describe('@Component decorator', () => {
         assert.equal(textElement.textContent, 'Dave');
     });
 
+    it('Nested @Component passing data via an attribute that updates', () => {
+
+        class State {
+            @Observable name = 'Bob';
+        }
+        let state = new State;
+
+        let renderCount = 0;
+        let textElement;
+
+        @Component({ fork: true })
+        class MyNestedComponent {
+            @Attribute name;
+
+            render() {
+                renderCount++;
+                return <div ref={ textElement }>{ this.name }</div>;
+            }
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            render() {
+                return <MyNestedComponent name={ state.name }/>;
+            }
+        }
+
+        // Attribute should be rendered in DOM:
+        render(<MyComponent />);
+        assert.equal(textElement.textContent, 'Bob');
+        assert.equal(renderCount, 1);
+
+        // Should update when we modify the observable
+        state.name = 'Dave';
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Dave');
+        assert.equal(renderCount, 2);
+
+        // Should update when we modify the observable
+        state.name = 'Dave2';
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Dave2');
+        assert.equal(renderCount, 3);
+    });
+
+    it('Nested @Component passing data via an attribute that updates - reading from this.props', () => {
+
+        class State {
+            @Observable name = 'Bob';
+        }
+        let state = new State;
+
+        let renderCount = 0;
+        let textElement;
+
+        @Component({ fork: true })
+        class MyNestedComponent {
+            render() {
+                renderCount++;
+                return <div ref={ textElement }>{ this.props.name }</div>;
+            }
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            render() {
+                return <MyNestedComponent name={ state.name }/>;
+            }
+        }
+
+        // Attribute should be rendered in DOM:
+        render(<MyComponent />);
+        assert.equal(textElement.textContent, 'Bob');
+        assert.equal(renderCount, 1);
+
+        // Should update when we modify the observable
+        state.name = 'Dave';
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Dave');
+        assert.equal(renderCount, 2);
+
+        // Should update when we modify the observable
+        state.name = 'Dave2';
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Dave2');
+        assert.equal(renderCount, 3);
+    });
+
     it('Nested @Component passing data via this.children with an @Observable that updates', () => {
 
         class State {
@@ -81,8 +169,6 @@ describe('@Component decorator', () => {
 
         @Component({ fork: true })
         class MyNestedComponent {
-            @Attribute name;
-
             render() {
                 return <div ref={ textElement }>{ this.children }</div>;
             }
@@ -116,8 +202,6 @@ describe('@Component decorator', () => {
 
         @Component({ fork: true })
         class MyNestedComponent {
-            @Attribute name;
-
             render() {
                 return <div ref={ textElement }>{ this.children }</div>;
             }
@@ -141,6 +225,47 @@ describe('@Component decorator', () => {
         state.show = true;
         TaskQueue.run();
         assert.equal(textElement.innerHTML, '<div>A</div><div>B</div>');
+    });
+
+    it('Nested @Component with variable props that updates', () => {
+
+        class State {
+            @Observable showName = false;
+        }
+        let state = new State;
+
+        let textElement;
+
+        @Component({ fork: true })
+        class MyNestedComponent {
+            @Attribute name;
+            render() {
+                return <div ref={ textElement }>{ this.name || 'NoName' }</div>;
+            }
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            render() {
+                return <g>
+                    <if condition={ state.showName }>
+                        <MyNestedComponent name="Bob" />
+                    </if>
+                    <else>
+                        <MyNestedComponent />
+                    </else>
+                </g>;
+            }
+        }
+
+        // Attribute should be rendered in DOM:
+        render(<MyComponent />);
+        assert.equal(textElement.textContent, 'NoName');
+
+        // Should update when we modify the observable
+        state.showName = true;
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Bob');
     });
 
     it('@Component should call lifecycle events in correct order', () => {
@@ -170,6 +295,10 @@ describe('@Component decorator', () => {
             componentWillUnmount() {
                 events.push('will_unmount');
             }
+            render() {
+                events.push('render');
+                return <div>{ this.name }</div>;
+            }
         }
 
         @Component({ fork: true })
@@ -181,13 +310,15 @@ describe('@Component decorator', () => {
 
         let rootComp;
         render(<MyRootComponent ref={ rootComp } name={ Data.name }/>);
-        assert.deepEqual(events, [ 'constructor', 'did_mount' ]);
+        assert.deepEqual(events, [ 'constructor', 'render', 'did_mount' ]);
 
+        events = [];
         Data.name = 'Bob';
-        assert.deepEqual(events, [ 'constructor', 'did_mount', 'will_update', 'did_update' ]);
+        assert.deepEqual(events, [ 'will_update', 'render', 'did_update', 'will_update', 'did_update' ]);
 
+        events = [];
         render.dispose();
-        assert.deepEqual(events, [ 'constructor', 'did_mount', 'will_update', 'did_update', 'will_unmount', 'dispose' ]);
+        assert.deepEqual(events, [ 'will_unmount', 'dispose' ]);
     });
 
     it('@Component should propagate scope', () => {

@@ -157,10 +157,9 @@ export default class BaseVirtualComponent {
                 item = undefined;
             }
             if (item && (propsDiffer(content.props, item.props) || propsDiffer(childContext, item.context))) {
-                let oldProps = item.props, oldContext = item.context;
+                item.componentWillUpdate(content.props, childContext);
                 item.props = content.props;
                 item.context = childContext;
-                item.componentDidUpdate(oldProps, oldContext);
             }
             if (!item) {
                 items[i] = this.link(instantiateContent(content, childContext));
