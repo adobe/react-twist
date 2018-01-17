@@ -201,7 +201,7 @@ export default class Component extends React.PureComponent {
      * Note: Right now this takes a prefix, not a namespace, because React doesn't support namespaced attributes
      */
     undeclaredAttributes(prefix) {
-        let childAttributes = {};
+        let undeclaredAttributes = {};
         let attributes = this[definedAttributes] || {};
         Object.keys(this.props).forEach(name => {
             if (!attributes[name]) {
@@ -211,11 +211,11 @@ export default class Component extends React.PureComponent {
                     childName = childName.substring(prefix.length);
                 }
                 if (!prefix || prefixIndex === 0) {
-                    childAttributes[childName] = this.props[name];
+                    undeclaredAttributes[childName] = this.props[name];
                 }
             }
         });
-        return childAttributes;
+        return undeclaredAttributes;
     }
 
     /**
