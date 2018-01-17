@@ -81,6 +81,7 @@ class TodoItem {
 @Component({ fork: true, throttleUpdates: false })
 export default class MainView {
     @Observable userName;
+    @Observable filterCompleted;
 
     constructor(props, context) {
         super(props, context);
@@ -133,7 +134,9 @@ export default class MainView {
 
             <div style-text-align="left" class={ MainViewLess.sample }>
                 <h3 class={ MainViewLess.header }>TODO List</h3>
-                <repeat for={ (item, index) in this.scope.store.todo.items }>
+                <div><input type="checkbox" bind:checked={ this.filterCompleted } />Filter Completed Items</div>
+                <repeat for={ (item, index) in this.scope.store.todo.items.filter(item => !this.filterCompleted || !item.isCompleted) }>
+                    { /* Note: It would be more efficient to filter using an if, so the keys are the "true" indices in the array. This is to demonstrate a filter */ }
                     <TodoItem item={ item } key={ index } index={ index } />
                 </repeat>
                 <button onClick={ () => this.addTodo() }>Add TODO</button>
