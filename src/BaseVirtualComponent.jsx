@@ -161,7 +161,6 @@ export default class BaseVirtualComponent {
                 item.props = content.props;
                 item.context = childContext;
                 item.componentDidUpdate(oldProps, oldContext);
-                item.forceUpdate(); //?
             }
             if (!item) {
                 items[i] = this.link(instantiateContent(content, childContext));
