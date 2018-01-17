@@ -11,9 +11,10 @@
  *
  */
 
-/* global describe it */
+/* global describe it afterEach */
 import assert from 'assert';
-import { renderIntoDocument as render } from 'react-dom/test-utils';
+import sinon from 'sinon';
+import { render } from '../Utils';
 import { TaskQueue, ObservableArray } from '@twist/core';
 
 /**
@@ -32,7 +33,7 @@ class List {
 @Component({ fork: true })
 class View {
 
-    @Attribute elements;
+    @Attribute elements = [];
     @Attribute name;
 
     constructor() {
@@ -43,7 +44,7 @@ class View {
 
     compute() {
         let x = [];
-        this.data.children.forEach(item => x.push(item.name));
+        this.data.children.forEach(item => x.push(item.name || item.x));
         return x.join(',');
     }
 
@@ -53,7 +54,6 @@ class View {
             <div ref={ this.elements[0] }>{ this.data.children.length }</div>
             <div ref={ this.elements[1] }>{ this.data.children.length > 0 ? 'yes' : 'no' }</div>
             <div ref={ this.elements[2] }>{ this.compute() }</div>
-            { this.props.children }
         </g>;
     }
 }
@@ -63,6 +63,10 @@ class View {
 **/
 
 describe('@VirtualComponent decorator', () => {
+
+    afterEach(() => {
+        render.dispose();
+    });
 
     it('Basic @VirtualComponent - should not render', () => {
         let element;
@@ -99,6 +103,19 @@ describe('@VirtualComponent decorator', () => {
             '5',
             'yes',
             'A,B,D1,D2,D3'
+        ]);
+    });
+
+    it('@VirtualComponent should render with only one child', () => {
+        let elements = [];
+
+        render(<View elements={ elements }>
+            <Item name="A" />
+        </View>);
+        assert.deepEqual(elements.map(e => e.textContent), [
+            '1',
+            'yes',
+            'A'
         ]);
     });
 
@@ -141,6 +158,123 @@ describe('@VirtualComponent decorator', () => {
             'yes',
             'A,B,C,D1,D4,D2,D3'
         ]);
+
+        Data.showC = false;
+        Data.items.splice(1, 2);
+        TaskQueue.run();
+
+        assert.deepEqual(elements.map(e => e.textContent), [
+            '4',
+            'yes',
+            'A,B,D1,D3'
+        ]);
+    });
+
+    it('@VirtualComponent should dynamically update with different child items', () => {
+        let elements = [];
+
+        class Data {
+            static items = new ObservableArray([ 1, 2 ]);
+        }
+
+        @VirtualComponent
+        class DifferentItem {
+            @Attribute x;
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            render() {
+                return <View elements={ elements } name={ Data.items.length }>
+                    <repeat for={ x in Data.items }>
+                        <Item name={ 'Item' + x } />
+                    </repeat>
+                    <repeat for={ x in Data.items }>
+                        <DifferentItem x={ 'DifferentItem' + x } />
+                    </repeat>
+                </View>;
+            }
+        }
+
+        render(<MyComponent />);
+        assert.deepEqual(elements.map(e => e.textContent), [
+            '4',
+            'yes',
+            'Item1,Item2,DifferentItem1,DifferentItem2'
+        ]);
+
+        Data.items.push(3);
+        TaskQueue.run();
+
+        assert.deepEqual(elements.map(e => e.textContent), [
+            '6',
+            'yes',
+            'Item1,Item2,Item3,DifferentItem1,DifferentItem2,DifferentItem3'
+        ]);
+    });
+
+    it('@VirtualComponent should dynamically update with different props', () => {
+        let elements = [];
+
+        class Data {
+            @Observable static inject = false;
+            static items = new ObservableArray([ 1, 2, 3 ]);
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            render() {
+                return <View elements={ elements } name={ Data.items.length }>
+                    <if condition={ Data.inject }>
+                        <Item />
+                    </if>
+                    <repeat for={ x in Data.items }>
+                        <Item name={ 'D' + x } />
+                    </repeat>
+                </View>;
+            }
+        }
+
+        render(<MyComponent />);
+        assert.deepEqual(elements.map(e => e.textContent), [
+            '3',
+            'yes',
+            'D1,D2,D3'
+        ]);
+
+        Data.showC = true;
+        Data.items.setAt(0, 4);
+        Data.items.setAt(1, 5);
+        Data.items.setAt(2, 6);
+        TaskQueue.run();
+
+        assert.deepEqual(elements.map(e => e.textContent), [
+            '3',
+            'yes',
+            'D4,D5,D6'
+        ]);
+
+        Data.inject = true;
+        TaskQueue.run();
+
+        assert.deepEqual(elements.map(e => e.textContent), [
+            '4',
+            'yes',
+            ',D4,D5,D6'
+        ]);
+    });
+
+    it('@VirtualComponent should give an error if you use DOM elements inside it', () => {
+        sinon.spy(console, 'error');
+
+        render(<View>
+            <List>
+                <div>HTML Element</div>
+            </List>
+        </View>);
+
+        assert(console.error.calledWith('Unexpected virtual type `div`. You cannot use concrete HTML tags in a virtual component - all components must themselves be virtual.'));
+        console.error.restore();
     });
 
 });

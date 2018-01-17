@@ -11,12 +11,17 @@
  *
  */
 
-/* global describe it */
+/* global describe it afterEach */
 import assert from 'assert';
-import { renderIntoDocument as render } from 'react-dom/test-utils';
+import sinon from 'sinon';
+import { render } from '../Utils';
 import { TaskQueue } from '@twist/core';
 
 describe('@Component decorator', () => {
+
+    afterEach(() => {
+        render.dispose();
+    });
 
     it('Basic @Component with an @Attribute', () => {
 
@@ -65,6 +70,94 @@ describe('@Component decorator', () => {
         assert.equal(textElement.textContent, 'Dave');
     });
 
+    it('Nested @Component passing data via an attribute that updates', () => {
+
+        class State {
+            @Observable name = 'Bob';
+        }
+        let state = new State;
+
+        let renderCount = 0;
+        let textElement;
+
+        @Component({ fork: true })
+        class MyNestedComponent {
+            @Attribute name;
+
+            render() {
+                renderCount++;
+                return <div ref={ textElement }>{ this.name }</div>;
+            }
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            render() {
+                return <MyNestedComponent name={ state.name }/>;
+            }
+        }
+
+        // Attribute should be rendered in DOM:
+        render(<MyComponent />);
+        assert.equal(textElement.textContent, 'Bob');
+        assert.equal(renderCount, 1);
+
+        // Should update when we modify the observable
+        state.name = 'Dave';
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Dave');
+        assert.equal(renderCount, 2);
+
+        // Should update when we modify the observable
+        state.name = 'Dave2';
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Dave2');
+        assert.equal(renderCount, 3);
+    });
+
+    it('Nested @Component passing data via an attribute that updates - reading from this.props', () => {
+
+        class State {
+            @Observable name = 'Bob';
+        }
+        let state = new State;
+
+        let renderCount = 0;
+        let textElement;
+
+        @Component({ fork: true })
+        class MyNestedComponent {
+            render() {
+                renderCount++;
+                return <div ref={ textElement }>{ this.props.name }</div>;
+            }
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            render() {
+                return <MyNestedComponent name={ state.name }/>;
+            }
+        }
+
+        // Attribute should be rendered in DOM:
+        render(<MyComponent />);
+        assert.equal(textElement.textContent, 'Bob');
+        assert.equal(renderCount, 1);
+
+        // Should update when we modify the observable
+        state.name = 'Dave';
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Dave');
+        assert.equal(renderCount, 2);
+
+        // Should update when we modify the observable
+        state.name = 'Dave2';
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Dave2');
+        assert.equal(renderCount, 3);
+    });
+
     it('Nested @Component passing data via this.children with an @Observable that updates', () => {
 
         class State {
@@ -76,8 +169,6 @@ describe('@Component decorator', () => {
 
         @Component({ fork: true })
         class MyNestedComponent {
-            @Attribute name;
-
             render() {
                 return <div ref={ textElement }>{ this.children }</div>;
             }
@@ -85,15 +176,13 @@ describe('@Component decorator', () => {
 
         @Component({ fork: true })
         class MyComponent {
-            @Attribute name;
-
             render() {
                 return <MyNestedComponent>{ state.name }</MyNestedComponent>;
             }
         }
 
         // Attribute should be rendered in DOM:
-        render(<MyComponent name="Bob" />);
+        render(<MyComponent />);
         assert.equal(textElement.textContent, 'Bob');
 
         // Should update when we modify the observable
@@ -102,6 +191,136 @@ describe('@Component decorator', () => {
         assert.equal(textElement.textContent, 'Dave');
     });
 
+    it('Nested @Component with variable this.children that updates', () => {
+
+        class State {
+            @Observable show = false;
+        }
+        let state = new State;
+
+        let textElement;
+
+        @Component({ fork: true })
+        class MyNestedComponent {
+            render() {
+                return <div ref={ textElement }>{ this.children }</div>;
+            }
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            render() {
+                return <MyNestedComponent>
+                    <if condition={ state.show }><div>A</div></if>
+                    <div>B</div>
+                </MyNestedComponent>;
+            }
+        }
+
+        // Attribute should be rendered in DOM:
+        render(<MyComponent />);
+        assert.equal(textElement.innerHTML, '<div>B</div>');
+
+        // Should update when we modify the observable
+        state.show = true;
+        TaskQueue.run();
+        assert.equal(textElement.innerHTML, '<div>A</div><div>B</div>');
+    });
+
+    it('Nested @Component with variable props that updates', () => {
+
+        class State {
+            @Observable showName = false;
+        }
+        let state = new State;
+
+        let textElement;
+
+        @Component({ fork: true })
+        class MyNestedComponent {
+            @Attribute name;
+            render() {
+                return <div ref={ textElement }>{ this.name || 'NoName' }</div>;
+            }
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            render() {
+                return <g>
+                    <if condition={ state.showName }>
+                        <MyNestedComponent name="Bob" />
+                    </if>
+                    <else>
+                        <MyNestedComponent />
+                    </else>
+                </g>;
+            }
+        }
+
+        // Attribute should be rendered in DOM:
+        render(<MyComponent />);
+        assert.equal(textElement.textContent, 'NoName');
+
+        // Should update when we modify the observable
+        state.showName = true;
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Bob');
+    });
+
+    it('@Component should call lifecycle events in correct order', () => {
+        let events = [];
+
+        class Data {
+            @Observable static name;
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            @Attribute name;
+            constructor() {
+                super();
+                events.push('constructor');
+                this.link(() => events.push('dispose'));
+            }
+            componentWillUpdate() {
+                events.push('will_update');
+            }
+            componentDidUpdate() {
+                events.push('did_update');
+            }
+            componentDidMount() {
+                events.push('did_mount');
+            }
+            componentWillUnmount() {
+                events.push('will_unmount');
+            }
+            render() {
+                events.push('render');
+                return <div>{ this.name }</div>;
+            }
+        }
+
+        @Component({ fork: true })
+        class MyRootComponent {
+            render() {
+                return <MyComponent name={ Data.name } />;
+            }
+        }
+
+        let rootComp;
+        render(<MyRootComponent ref={ rootComp } name={ Data.name }/>);
+        assert.deepEqual(events, [ 'constructor', 'render', 'did_mount' ]);
+
+        events = [];
+        Data.name = 'Bob';
+        assert.deepEqual(events, [ 'will_update', 'render', 'did_update', 'will_update', 'did_update' ]);
+
+        events = [];
+        render.dispose();
+        assert.deepEqual(events, [ 'will_unmount', 'dispose' ]);
+    });
+
     it('@Component should propagate scope', () => {
 
         let textElement;
@@ -122,8 +341,8 @@ describe('@Component decorator', () => {
 
         @Component({ fork: true })
         class Component3 {
-            constructor(props, context) {
-                super(props, context);
+            constructor() {
+                super();
                 this.scope.name = 'Bob';
             }
             render() {
@@ -156,8 +375,8 @@ describe('@Component decorator', () => {
 
         @Component({ fork: true })
         class Component3 {
-            constructor(props, context) {
-                super(props, context);
+            constructor() {
+                super();
                 this.scope.name = 'Bob';
             }
             render() {
@@ -168,6 +387,20 @@ describe('@Component decorator', () => {
         // Attribute should be rendered in DOM:
         render(<Component3 name="Bob" />);
         assert.equal(textElement.textContent, 'Bob');
+    });
+
+    it('@Component should warn if used at top-level without forking the scope', () => {
+
+        sinon.spy(console, 'warn');
+
+        @Component
+        class MyComponent {
+        }
+
+        render(<MyComponent />);
+
+        assert(console.warn.calledWith('`MyComponent` was instantiated at the top-level without a forked scope - please change to @Component({ fork: true })'));
+        console.warn.restore();
     });
 
     it('@Component should support events', () => {
@@ -179,8 +412,8 @@ describe('@Component decorator', () => {
         class MyComponent {
             @Attribute name;
 
-            constructor(props, context) {
-                super(props, context);
+            constructor() {
+                super();
 
                 this.on('accept', val => events.push('on_' + val));
             }
@@ -194,6 +427,30 @@ describe('@Component decorator', () => {
 
         buttonElement.click();
         assert.deepEqual(events, [ 'onAccept_a', 'on_a' ]);
+    });
+
+    it('@Component ignores triggering invalid events', () => {
+
+        @Component({ fork: true, events: [ 'accept' ] })
+        class MyComponent {
+            render() {
+                return <div>Test</div>;
+            }
+        }
+
+        let comp;
+        render(<MyComponent ref={ comp } onAccept={ 'not a function' }/>);
+
+        sinon.spy(console, 'warn');
+
+        // Can trigger a null event - it's ignored
+        comp.trigger();
+        assert.equal(console.warn.callCount, 0);
+
+        // Can trigger a custom event - but since it isn't a function we get a warning instead
+        comp.trigger('accept');
+        assert(console.warn.calledWith('Ignoring non-function event handler `onAccept`.'));
+        console.warn.restore();
     });
 
     it('@Component can render children', () => {
@@ -256,6 +513,13 @@ describe('@Component decorator', () => {
         assert.equal(divElement.innerHTML, 'Test Content Hello');
     });
 
+    it('@Component.renderChildren should throw an error if arguments not an array', () => {
+        @Component({ fork: true })
+        class MyComponent {
+        }
+        assert.throws(() => new MyComponent({}).renderChildren('test:content', 'notanarray'), /args parameter to renderChildren\(\) must be an array/);
+    });
+
     it('@Component can pass through undeclared attributes', () => {
         let divElement;
 
@@ -271,6 +535,21 @@ describe('@Component decorator', () => {
         render(<MyComponent x="a" y="b" />);
 
         assert.equal(divElement.innerHTML, '<div y="b"></div>');
+    });
+
+    it('@Component can pass through undeclared attributes, using a namespace prefix', () => {
+        let divElement;
+
+        @Component({ fork: true })
+        class MyComponent {
+            render() {
+                return <div ref={ element => divElement = element }><div { ...this.undeclaredAttributes('ns_') }/></div>;
+            }
+        }
+
+        render(<MyComponent ns_x="a" y="b" ns_z="c" diff_w="d" />);
+
+        assert.equal(divElement.innerHTML, '<div x="a" z="c"></div>');
     });
 
     it('@Component ignores unknown parameters', () => {
@@ -293,7 +572,45 @@ describe('@Component decorator', () => {
         assert.equal(divElement.innerHTML, '<div>test</div>');
     });
 
-    it('Rendering undefined is all right.', () => {
+    it('@Component should give warning if there are no props', () => {
+        sinon.spy(console, 'warn');
+
+        @Component({ fork: true })
+        class MyComponent {
+            constructor() {
+                super(undefined);
+            }
+        }
+
+        new MyComponent();
+        assert(console.warn.calledWith(`You must call super(props, context) from the constructor of a component -
+            if the class is not a component, don't decorate it with @Component!`));
+        console.warn.restore();
+    });
+
+    it('@Component should support a throttleUpdates:false option to update immediately on every change', () => {
+        let comp, textElement;
+
+        @Component({ fork: true, throttleUpdates: false })
+        class MyComponent {
+            @Observable text = 'Hello';
+            render() {
+                return <div ref={ textElement }>{ this.text }</div>;
+            }
+        }
+
+        render(<MyComponent ref={ comp } />);
+        assert.equal(textElement.textContent, 'Hello');
+
+        comp.text = 'Goodbye';
+        assert.equal(textElement.textContent, 'Goodbye');
+
+        // Without forceUpdate this will be throttled
+        comp.text = 'Hello';
+        assert.equal(textElement.textContent, 'Hello');
+    });
+
+    it('Rendering undefined is ok', () => {
         @Component({ fork: true })
         class MyComponent {
             render() {

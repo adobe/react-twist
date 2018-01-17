@@ -11,13 +11,18 @@
  *
  */
 
-/* global describe it */
+/* global describe it afterEach */
 import assert from 'assert';
 import sinon from 'sinon';
-import { renderIntoDocument as render } from 'react-dom/test-utils';
+import { render } from '../Utils';
+import { Simulate } from 'react-dom/test-utils';
 import PropTypes from 'prop-types';
 
 describe('@Attribute decorator', () => {
+
+    afterEach(() => {
+        render.dispose();
+    });
 
     it('@Attribute should take default value', () => {
 
@@ -25,7 +30,7 @@ describe('@Attribute decorator', () => {
 
         @Component({ fork: true })
         class MyComponent {
-            @Attribute name = 'Bob';
+            @Attribute name = 'Bob' + '';
 
             render() {
                 return <div ref={ element => textElement = element }>{ this.name }</div>;
@@ -39,6 +44,39 @@ describe('@Attribute decorator', () => {
         // Default value can be overriden:
         render(<MyComponent name="Fred" />);
         assert.equal(textElement.textContent, 'Fred');
+    });
+
+    it('@Attribute should take default value as an expression', () => {
+
+        let textElement;
+
+        @Component({ fork: true })
+        class MyComponent {
+            @Attribute name = 'Bob' + (() => '\'s your uncle')();
+
+            render() {
+                return <div ref={ textElement }>{ this.name }</div>;
+            }
+        }
+
+        // Default value should be rendered in DOM:
+        render(<MyComponent />);
+        assert.equal(textElement.textContent, 'Bob\'s your uncle');
+    });
+
+    it('@Attribute should give warning if you use an expression that contains this as the default value', () => {
+
+        sinon.spy(console, 'warn');
+
+        @Component({ fork: true })
+        class MyComponent {
+            @Attribute name = 'Bob'
+            @Attribute address = this.name + '_address';
+        }
+
+        assert(MyComponent);
+        assert(console.warn.calledWith('Ignoring default value for attribute `address` of `MyComponent` - default attribute values cannot reference `this` in React, since they\'re defined on the class.'));
+        console.warn.restore();
     });
 
     it('@Attribute should take propType', () => {
@@ -80,6 +118,79 @@ describe('@Attribute decorator', () => {
         // Should render title as Bob, even though passed as name
         render(<MyComponent name="Bob" />);
         assert.equal(textElement.textContent, 'Bob');
+    });
+
+    it('@Attribute can have its value set, and calls event property', () => {
+
+        @Component({ fork: true })
+        class MyComponent {
+            @Attribute name = 'Bob';
+            @Attribute address = 'Unknown';
+
+            render() {
+                return null;
+            }
+        }
+
+        let comp;
+        let changeCallback = sinon.spy();
+        render(<MyComponent ref={ comp } onNameChange={ changeCallback } />);
+
+        sinon.spy(console, 'warn');
+
+        // Changing an attribute that doesn't have an event should give a warning (and not actually change it)
+        comp.address = 'New Address';
+        assert.equal(comp.address, 'Unknown');
+        assert(console.warn.calledWith('Attribute `address` of `MyComponent` was modified, but no `onAddressChange` attribute was specified. If you want two-way binding, make sure to use `bind:address` as the attribute name.'));
+        console.warn.restore();
+
+        // Changing an attribute that _does_ have an event prop should call that function
+        comp.name = 'New Name';
+        assert(changeCallback.calledWith('New Name'));
+    });
+
+    it('@Attribute works with two-way binding', () => {
+
+        let textElement;
+        let parentComp;
+
+        @Component({ fork: true })
+        class MyComponent {
+            @Attribute name = 'Bob';
+
+            render() {
+                return <div ref={ textElement } onClick={ () => this.name += '_' }>{ this.name }</div>;
+            }
+        }
+
+        @Component({ fork: true })
+        class MyContainer {
+
+            @Observable name = 'Dave'
+
+            render() {
+                return <MyComponent bind:name={ this.name } />;
+            }
+        }
+
+        render(<MyContainer ref={ parentComp } />);
+        assert.equal(textElement.textContent, 'Dave');
+        assert.equal(parentComp.name, 'Dave');
+
+        // Changing the name in the child, should propagate to the parent, since we're using "bind:name"
+        Simulate.click(textElement);
+        assert.equal(textElement.textContent, 'Dave_');
+        assert.equal(parentComp.name, 'Dave_');
+    });
+
+    it('@Attribute should throw an error if used on a non-component', () => {
+
+        assert.throws(() => {
+            class Test {
+                @Attribute name;
+            }
+            new Test();
+        }, /@Attribute can only be used for properties on an @Component. `Test` is not an @Component./);
     });
 
 });

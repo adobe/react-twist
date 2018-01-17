@@ -11,9 +11,12 @@
  *
  */
 
-import { TaskQueue } from '@twist/core';
+import { TaskQueue, Binder } from '@twist/core';
 import BaseComponent from './BaseComponent';
 import { _originalRender } from './BaseComponent';
+
+let BinderRecordChange = Binder.recordChange;
+let BinderRecordEvent = Binder.recordEvent;
 
 function isNullOrWhitespace(item) {
     return !item || /^\s+$/.test(item);
@@ -52,22 +55,24 @@ function instantiateContent(content, context) {
         return new ContentClass(content.props, context);
     }
     catch (e) {
-        console.error(`Unexpected virtual type: ${content.type}. You cannot use concrete HTML tags in a virtual component - all components must themselves be virtual`);
+        // We just fall back to a plain virtual component and print an error, if we see an HTML element
+        console.error(`Unexpected virtual type \`${content.type}\`. You cannot use concrete HTML tags in a virtual component - all components must themselves be virtual.`);
+        return new BaseVirtualComponent({}, context);
     }
 }
 
 function propsDiffer(propsA, propsB) {
     for (let key in propsA) {
         if (propsA.hasOwnProperty(key) && propsA[key] !== propsB[key]) {
-            return false;
+            return true;
         }
     }
     for (let key in propsB) {
         if (propsB.hasOwnProperty(key) && propsA[key] !== propsB[key]) {
-            return false;
+            return true;
         }
     }
-    return true;
+    return false;
 }
 
 const _dirty = Symbol('dirty');
@@ -155,7 +160,6 @@ export default class BaseVirtualComponent {
                 item.componentWillUpdate(content.props, childContext);
                 item.props = content.props;
                 item.context = childContext;
-                item.forceUpdate();
             }
             if (!item) {
                 items[i] = this.link(instantiateContent(content, childContext));
@@ -171,6 +175,7 @@ export default class BaseVirtualComponent {
         }
         items.length = contents.length;
 
+        BinderRecordChange(this, 'virtual.children');
         // TODO: Trigger an event so this can be extended
     }
 
@@ -221,6 +226,7 @@ export default class BaseVirtualComponent {
         }
 
         this[_linked].component = component;
+        this.link(() => this[_linked].component = null);
         this.forceUpdate();
         return component.link(this);
     }
@@ -230,6 +236,7 @@ export default class BaseVirtualComponent {
      * @type {Array.<BaseVirtualComponent>}
      */
     get children() {
+        BinderRecordEvent(this, 'virtual.children');
         return flatten(this[_items], isNullOrNotVirtual);
     }
 
