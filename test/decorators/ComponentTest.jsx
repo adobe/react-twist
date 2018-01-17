@@ -90,21 +90,57 @@ describe('@Component decorator', () => {
 
         @Component({ fork: true })
         class MyComponent {
-            @Attribute name;
-
             render() {
                 return <MyNestedComponent>{ state.name }</MyNestedComponent>;
             }
         }
 
         // Attribute should be rendered in DOM:
-        render(<MyComponent name="Bob" />);
+        render(<MyComponent />);
         assert.equal(textElement.textContent, 'Bob');
 
         // Should update when we modify the observable
         state.name = 'Dave';
         TaskQueue.run();
         assert.equal(textElement.textContent, 'Dave');
+    });
+
+    it('Nested @Component with variable this.children that updates', () => {
+
+        class State {
+            @Observable show = false;
+        }
+        let state = new State;
+
+        let textElement;
+
+        @Component({ fork: true })
+        class MyNestedComponent {
+            @Attribute name;
+
+            render() {
+                return <div ref={ textElement }>{ this.children }</div>;
+            }
+        }
+
+        @Component({ fork: true })
+        class MyComponent {
+            render() {
+                return <MyNestedComponent>
+                    <if condition={ state.show }><div>A</div></if>
+                    <div>B</div>
+                </MyNestedComponent>;
+            }
+        }
+
+        // Attribute should be rendered in DOM:
+        render(<MyComponent />);
+        assert.equal(textElement.innerHTML, '<div>B</div>');
+
+        // Should update when we modify the observable
+        state.show = true;
+        TaskQueue.run();
+        assert.equal(textElement.innerHTML, '<div>A</div><div>B</div>');
     });
 
     it('@Component should call lifecycle events in correct order', () => {
