@@ -79,18 +79,18 @@ export default class Component extends React.PureComponent {
             return binder.previousValue !== undefined ? binder.previousValue : null;
         };
 
-        // Swap out the componentWillUpdate:
-        let originalComponentWillUpdate = this.componentWillUpdate && this.componentWillUpdate.bind(this);
-        this.componentWillUpdate = (nextProps, ...args) => {
+        // Swap out the componentDidUpdate:
+        let originalComponentDidUpdate = this.componentDidUpdate && this.componentDidUpdate.bind(this);
+        this.componentDidUpdate = (prevProps, ...args) => {
             for (let key in this.props) {
                 // We have to signal a change if any of the props change, so that any watches that depend on them will trigger!
-                if (this.props[key] !== nextProps[key]) {
-                    BinderRecordChange(this, key);
+                if (this.props[key] !== prevProps[key]) {
+                    BinderRecordChange(this, 'props.' + key);
                 }
             }
 
-            if (originalComponentWillUpdate) {
-                originalComponentWillUpdate(nextProps, ...args);
+            if (originalComponentDidUpdate) {
+                originalComponentDidUpdate(prevProps, ...args);
             }
         };
 
@@ -151,7 +151,7 @@ export default class Component extends React.PureComponent {
         // React doesn't support namespaced tags/attributes, so need to strip out colons
         name = name.replace(/:/g, '_');
 
-        BinderRecordEvent(this, name);
+        BinderRecordEvent(this,  'props.' + name);
         let children = this.props[name];
 
         // Apply the arguments

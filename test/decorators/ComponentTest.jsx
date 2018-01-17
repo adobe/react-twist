@@ -161,6 +161,9 @@ describe('@Component decorator', () => {
             componentWillUpdate() {
                 events.push('will_update');
             }
+            componentDidUpdate() {
+                events.push('did_update');
+            }
             componentDidMount() {
                 events.push('did_mount');
             }
@@ -181,10 +184,10 @@ describe('@Component decorator', () => {
         assert.deepEqual(events, [ 'constructor', 'did_mount' ]);
 
         Data.name = 'Bob';
-        assert.deepEqual(events, [ 'constructor', 'did_mount', 'will_update' ]);
+        assert.deepEqual(events, [ 'constructor', 'did_mount', 'will_update', 'did_update' ]);
 
         render.dispose();
-        assert.deepEqual(events, [ 'constructor', 'did_mount', 'will_update', 'will_unmount', 'dispose' ]);
+        assert.deepEqual(events, [ 'constructor', 'did_mount', 'will_update', 'did_update', 'will_unmount', 'dispose' ]);
     });
 
     it('@Component should propagate scope', () => {

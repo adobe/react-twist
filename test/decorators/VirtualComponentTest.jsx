@@ -224,8 +224,6 @@ describe('@VirtualComponent decorator', () => {
         @Component({ fork: true })
         class MyComponent {
             render() {
-                Data.inject; // TODO: We have a bug here - this shouldn't be needed to allow updates to happen
-
                 return <View elements={ elements } name={ Data.items.length }>
                     <if condition={ Data.inject }>
                         <Item />

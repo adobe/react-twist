@@ -11,9 +11,12 @@
  *
  */
 
-import { TaskQueue } from '@twist/core';
+import { TaskQueue, Binder } from '@twist/core';
 import BaseComponent from './BaseComponent';
 import { _originalRender } from './BaseComponent';
+
+let BinderRecordChange = Binder.recordChange;
+let BinderRecordEvent = Binder.recordEvent;
 
 function isNullOrWhitespace(item) {
     return !item || /^\s+$/.test(item);
@@ -154,10 +157,11 @@ export default class BaseVirtualComponent {
                 item = undefined;
             }
             if (item && (propsDiffer(content.props, item.props) || propsDiffer(childContext, item.context))) {
-                item.componentWillUpdate(content.props, childContext);
+                let oldProps = item.props, oldContext = item.context;
                 item.props = content.props;
                 item.context = childContext;
-                item.forceUpdate();
+                item.componentDidUpdate(oldProps, oldContext);
+                item.forceUpdate(); //?
             }
             if (!item) {
                 items[i] = this.link(instantiateContent(content, childContext));
@@ -173,6 +177,7 @@ export default class BaseVirtualComponent {
         }
         items.length = contents.length;
 
+        BinderRecordChange(this, 'virtual.children');
         // TODO: Trigger an event so this can be extended
     }
 
@@ -233,6 +238,7 @@ export default class BaseVirtualComponent {
      * @type {Array.<BaseVirtualComponent>}
      */
     get children() {
+        BinderRecordEvent(this, 'virtual.children');
         return flatten(this[_items], isNullOrNotVirtual);
     }
 

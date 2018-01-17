@@ -47,7 +47,7 @@ export default DecoratorUtils.makePropertyDecorator((target, property, descripto
         configurable: true,
         enumerable: false,
         get() {
-            BinderRecordEvent(this, property);
+            BinderRecordEvent(this, 'props.' + property);
             return this.props[property];
         },
         set(val) {
