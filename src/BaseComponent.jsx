@@ -108,7 +108,8 @@ export default class Component extends React.PureComponent {
         else if (!this[_scope]) {
             // Note: We don't error here, because sometimes people decorate a class that's not a component with @Component.
             // If scope is actually used, there will still be an error further down the line, but this warning should help explain it!
-            console.warn('A top-level component was instantiated without a forked scope - please change to @Component({ fork: true })');
+            let className = this.constructor.name;
+            console.warn(`\`${className}\` was instantiated at the top-level without a forked scope - please change to @Component({ fork: true })`);
         }
 
         let originalComponentWillUnmount = this.componentWillUnmount && this.componentWillUnmount.bind(this);
@@ -178,7 +179,9 @@ export default class Component extends React.PureComponent {
                 if (prefixIndex === 0) {
                     childName = childName.substring(prefix.length);
                 }
-                childAttributes[childName] = this.props[name];
+                if (!prefix || prefixIndex === 0) {
+                    childAttributes[childName] = this.props[name];
+                }
             }
         });
         return childAttributes;
@@ -199,7 +202,7 @@ export default class Component extends React.PureComponent {
             handler(...args);
         }
         else if (handler) {
-            console.warn('Ignoring non-function event handler: ' + camelCaseName);
+            console.warn(`Ignoring non-function event handler \`${camelCaseName}\`.`);
         }
 
         return SignalDispatcher.prototype.trigger.call(this, eventName, ...args);

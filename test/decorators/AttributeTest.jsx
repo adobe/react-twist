@@ -11,13 +11,18 @@
  *
  */
 
-/* global describe it */
+/* global describe it afterEach */
 import assert from 'assert';
 import sinon from 'sinon';
-import { renderIntoDocument as render, Simulate } from 'react-dom/test-utils';
+import { render } from '../Utils';
+import { Simulate } from 'react-dom/test-utils';
 import PropTypes from 'prop-types';
 
 describe('@Attribute decorator', () => {
+
+    afterEach(() => {
+        render.dispose();
+    });
 
     it('@Attribute should take default value', () => {
 
