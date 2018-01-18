@@ -28,7 +28,7 @@ describe('@Attribute decorator', () => {
 
         let textElement;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             @Attribute name = 'Bob' + '';
 
@@ -50,7 +50,7 @@ describe('@Attribute decorator', () => {
 
         let textElement;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             @Attribute name = 'Bob' + (() => '\'s your uncle')();
 
@@ -68,7 +68,7 @@ describe('@Attribute decorator', () => {
 
         sinon.spy(console, 'warn');
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             @Attribute name = 'Bob'
             @Attribute address = this.name + '_address';
@@ -83,7 +83,7 @@ describe('@Attribute decorator', () => {
 
         let textElement;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             @Attribute(PropTypes.string) name;
 
@@ -106,7 +106,7 @@ describe('@Attribute decorator', () => {
 
         let textElement;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             @Attribute('title') name;
 
@@ -122,7 +122,7 @@ describe('@Attribute decorator', () => {
 
     it('@Attribute can have its value set, and calls event property', () => {
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             @Attribute name = 'Bob';
             @Attribute address = 'Unknown';
@@ -154,7 +154,7 @@ describe('@Attribute decorator', () => {
         let textElement;
         let parentComp;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             @Attribute name = 'Bob';
 
@@ -163,9 +163,8 @@ describe('@Attribute decorator', () => {
             }
         }
 
-        @Component({ fork: true })
+        @Component
         class MyContainer {
-
             @Observable name = 'Dave'
 
             render() {

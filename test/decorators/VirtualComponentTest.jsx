@@ -30,7 +30,7 @@ class Item {
 class List {
 }
 
-@Component({ fork: true })
+@Component
 class View {
 
     @Attribute elements = [];
@@ -128,7 +128,7 @@ describe('@VirtualComponent decorator', () => {
             static items = new ObservableArray([ 1, 2, 3 ]);
         }
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <View elements={ elements } name={ Data.items.length }>
@@ -182,7 +182,7 @@ describe('@VirtualComponent decorator', () => {
             @Attribute x;
         }
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <View elements={ elements } name={ Data.items.length }>
@@ -221,7 +221,7 @@ describe('@VirtualComponent decorator', () => {
             static items = new ObservableArray([ 1, 2, 3 ]);
         }
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <View elements={ elements } name={ Data.items.length }>

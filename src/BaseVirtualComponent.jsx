@@ -90,7 +90,7 @@ class LinkedData {
  * A Virtual Component is a special type of component that doesn't render anything to the DOM, but instead exposes a
  * tree of nodes in JavaScript. It still has a render function, but it's not rendered by ReactDOM.
  */
-@Component({ fork: true })
+@Component
 export default class BaseVirtualComponent {
 
     [_dirty] = false;

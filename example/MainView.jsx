@@ -78,7 +78,7 @@ class TodoItem {
     }
 }
 
-@Component({ fork: true, throttleUpdates: false })
+@Component({ throttleUpdates: false })
 export default class MainView {
     @Observable userName;
     @Observable filterCompleted;

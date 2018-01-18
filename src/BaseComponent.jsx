@@ -133,7 +133,7 @@ export default class Component extends React.PureComponent {
             // Note: We don't error here, because sometimes people decorate a class that's not a component with @Component.
             // If scope is actually used, there will still be an error further down the line, but this warning should help explain it!
             let className = this.constructor.name;
-            console.warn(`\`${className}\` was instantiated at the top-level without a forked scope - please change to @Component({ fork: true })`);
+            console.warn(`\`${className}\` was instantiated at the top-level without a forked scope - \`@Component({ fork: false })\` is not supported for top-level components.`);
         }
 
         // Make sure we dispose after unmounting
