@@ -27,7 +27,7 @@ describe('@Component decorator', () => {
 
         let textElement;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             @Attribute name;
 
@@ -50,7 +50,7 @@ describe('@Component decorator', () => {
 
         let textElement;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             @Attribute name;
 
@@ -80,7 +80,7 @@ describe('@Component decorator', () => {
         let renderCount = 0;
         let textElement;
 
-        @Component({ fork: true })
+        @Component
         class MyNestedComponent {
             @Attribute name;
 
@@ -90,7 +90,7 @@ describe('@Component decorator', () => {
             }
         }
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <MyNestedComponent name={ state.name }/>;
@@ -125,7 +125,7 @@ describe('@Component decorator', () => {
         let renderCount = 0;
         let textElement;
 
-        @Component({ fork: true })
+        @Component
         class MyNestedComponent {
             render() {
                 renderCount++;
@@ -133,7 +133,7 @@ describe('@Component decorator', () => {
             }
         }
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <MyNestedComponent name={ state.name }/>;
@@ -167,14 +167,14 @@ describe('@Component decorator', () => {
 
         let textElement;
 
-        @Component({ fork: true })
+        @Component
         class MyNestedComponent {
             render() {
                 return <div ref={ textElement }>{ this.children }</div>;
             }
         }
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <MyNestedComponent>{ state.name }</MyNestedComponent>;
@@ -200,14 +200,14 @@ describe('@Component decorator', () => {
 
         let textElement;
 
-        @Component({ fork: true })
+        @Component
         class MyNestedComponent {
             render() {
                 return <div ref={ textElement }>{ this.children }</div>;
             }
         }
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <MyNestedComponent>
@@ -236,7 +236,7 @@ describe('@Component decorator', () => {
 
         let textElement;
 
-        @Component({ fork: true })
+        @Component
         class MyNestedComponent {
             @Attribute name;
             render() {
@@ -244,7 +244,7 @@ describe('@Component decorator', () => {
             }
         }
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <g>
@@ -275,7 +275,7 @@ describe('@Component decorator', () => {
             @Observable static name;
         }
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             @Attribute name;
             constructor() {
@@ -301,7 +301,7 @@ describe('@Component decorator', () => {
             }
         }
 
-        @Component({ fork: true })
+        @Component
         class MyRootComponent {
             render() {
                 return <MyComponent name={ Data.name } />;
@@ -339,7 +339,7 @@ describe('@Component decorator', () => {
             }
         }
 
-        @Component({ fork: true })
+        @Component
         class Component3 {
             constructor() {
                 super();
@@ -373,7 +373,7 @@ describe('@Component decorator', () => {
             }
         }
 
-        @Component({ fork: true })
+        @Component
         class Component3 {
             constructor() {
                 super();
@@ -393,13 +393,13 @@ describe('@Component decorator', () => {
 
         sinon.spy(console, 'warn');
 
-        @Component
+        @Component({ fork: false })
         class MyComponent {
         }
 
         render(<MyComponent />);
 
-        assert(console.warn.calledWith('`MyComponent` was instantiated at the top-level without a forked scope - please change to @Component({ fork: true })'));
+        assert(console.warn.calledWith('`MyComponent` was instantiated at the top-level without a forked scope - `@Component({ fork: false })` is not supported for top-level components.'));
         console.warn.restore();
     });
 
@@ -408,7 +408,7 @@ describe('@Component decorator', () => {
         let buttonElement;
         let events = [];
 
-        @Component({ fork: true, events: [ 'accept' ] })
+        @Component({ events: [ 'accept' ] })
         class MyComponent {
             @Attribute name;
 
@@ -431,7 +431,7 @@ describe('@Component decorator', () => {
 
     it('@Component ignores triggering invalid events', () => {
 
-        @Component({ fork: true, events: [ 'accept' ] })
+        @Component({ events: [ 'accept' ] })
         class MyComponent {
             render() {
                 return <div>Test</div>;
@@ -456,7 +456,7 @@ describe('@Component decorator', () => {
     it('@Component can render children', () => {
         let divElement;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <div ref={ element => divElement = element }>{ this.children }</div>;
@@ -471,7 +471,7 @@ describe('@Component decorator', () => {
     it('@Component can render children with arguments', () => {
         let divElement;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <div ref={ element => divElement = element }>{ this.renderChildren([ 'Hello' ]) }</div>;
@@ -486,7 +486,7 @@ describe('@Component decorator', () => {
     it('@Component can render named children', () => {
         let divElement;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <div ref={ element => divElement = element }>{ this.renderChildren('test:content') }</div>;
@@ -501,7 +501,7 @@ describe('@Component decorator', () => {
     it('@Component can render named children with arguments', () => {
         let divElement;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <div ref={ element => divElement = element }>{ this.renderChildren('test:content', [ 'Hello' ]) }</div>;
@@ -514,7 +514,7 @@ describe('@Component decorator', () => {
     });
 
     it('@Component.renderChildren should throw an error if arguments not an array', () => {
-        @Component({ fork: true })
+        @Component
         class MyComponent {
         }
         assert.throws(() => new MyComponent({}).renderChildren('test:content', 'notanarray'), /args parameter to renderChildren\(\) must be an array/);
@@ -523,7 +523,7 @@ describe('@Component decorator', () => {
     it('@Component can pass through undeclared attributes', () => {
         let divElement;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             @Attribute x;
 
@@ -540,7 +540,7 @@ describe('@Component decorator', () => {
     it('@Component can pass through undeclared attributes, using a namespace prefix', () => {
         let divElement;
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 return <div ref={ element => divElement = element }><div { ...this.undeclaredAttributes('ns_') }/></div>;
@@ -575,7 +575,7 @@ describe('@Component decorator', () => {
     it('@Component should give warning if there are no props', () => {
         sinon.spy(console, 'warn');
 
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             constructor() {
                 super(undefined);
@@ -591,7 +591,7 @@ describe('@Component decorator', () => {
     it('@Component should support a throttleUpdates:false option to update immediately on every change', () => {
         let comp, textElement;
 
-        @Component({ fork: true, throttleUpdates: false })
+        @Component({ throttleUpdates: false })
         class MyComponent {
             @Observable text = 'Hello';
             render() {
@@ -611,7 +611,7 @@ describe('@Component decorator', () => {
     });
 
     it('Rendering undefined is ok', () => {
-        @Component({ fork: true })
+        @Component
         class MyComponent {
             render() {
                 // This would throw in normal React.

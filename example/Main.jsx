@@ -14,7 +14,7 @@
 import ReactDOM from 'react-dom';
 import MainView from './MainView';
 
-@Component({ fork: true })
+@Component
 export class Main {
     render() {
         return <MainView />;
