@@ -17,6 +17,12 @@ import sinon from 'sinon';
 import { render } from '../Utils';
 import { TaskQueue } from '@twist/core';
 
+// Used by the tests if they need to bind to an external observable
+class State {
+    @Observable name = 'Bob';
+    @Observable show = false;
+}
+
 describe('@Component decorator', () => {
 
     afterEach(() => {
@@ -42,12 +48,7 @@ describe('@Component decorator', () => {
     });
 
     it('Basic @Component with an @Observable that updates', () => {
-
-        class State {
-            @Observable name = 'Bob';
-        }
         let state = new State;
-
         let textElement;
 
         @Component
@@ -71,12 +72,7 @@ describe('@Component decorator', () => {
     });
 
     it('Nested @Component passing data via an attribute that updates', () => {
-
-        class State {
-            @Observable name = 'Bob';
-        }
         let state = new State;
-
         let renderCount = 0;
         let textElement;
 
@@ -116,12 +112,7 @@ describe('@Component decorator', () => {
     });
 
     it('Nested @Component passing data via an attribute that updates - reading from this.props', () => {
-
-        class State {
-            @Observable name = 'Bob';
-        }
         let state = new State;
-
         let renderCount = 0;
         let textElement;
 
@@ -159,12 +150,7 @@ describe('@Component decorator', () => {
     });
 
     it('Nested @Component passing data via this.children with an @Observable that updates', () => {
-
-        class State {
-            @Observable name = 'Bob';
-        }
         let state = new State;
-
         let textElement;
 
         @Component
@@ -192,12 +178,7 @@ describe('@Component decorator', () => {
     });
 
     it('Nested @Component with variable this.children that updates', () => {
-
-        class State {
-            @Observable show = false;
-        }
         let state = new State;
-
         let textElement;
 
         @Component
@@ -228,12 +209,7 @@ describe('@Component decorator', () => {
     });
 
     it('Nested @Component with variable props that updates', () => {
-
-        class State {
-            @Observable showName = false;
-        }
         let state = new State;
-
         let textElement;
 
         @Component
@@ -248,7 +224,7 @@ describe('@Component decorator', () => {
         class MyComponent {
             render() {
                 return <g>
-                    <if condition={ state.showName }>
+                    <if condition={ state.show }>
                         <MyNestedComponent name="Bob" />
                     </if>
                     <else>
@@ -263,7 +239,7 @@ describe('@Component decorator', () => {
         assert.equal(textElement.textContent, 'NoName');
 
         // Should update when we modify the observable
-        state.showName = true;
+        state.show = true;
         TaskQueue.run();
         assert.equal(textElement.textContent, 'Bob');
     });
@@ -610,7 +586,7 @@ describe('@Component decorator', () => {
         assert.equal(textElement.textContent, 'Hello');
     });
 
-    it('Rendering undefined is ok', () => {
+    it('Should be able to render a component when render() returns undefined', () => {
         @Component
         class MyComponent {
             render() {
@@ -618,6 +594,78 @@ describe('@Component decorator', () => {
             }
         }
         render(<MyComponent />);
+    });
+
+    it('Should be able to render a component that uses two-way binding on an attribute', () => {
+
+        let textElement, comp;
+
+        @Component
+        class MyNestedComponent {
+            @Attribute name;
+
+            render() {
+                return this.children;
+            }
+        }
+
+        @Component
+        class MyComponent {
+            @Observable name = 'Test Name';
+            @Observable nestedComponent;
+
+            render() {
+                return <MyNestedComponent bind:name={ this.name } ref={ this.nestedComponent }>
+                    <div ref={ textElement }>{ this.name + ', ' + (this.nestedComponent && this.nestedComponent.name) }</div>
+                </MyNestedComponent>;
+            }
+        }
+
+        render(<MyComponent ref={ comp }/>);
+        assert.equal(textElement.textContent, 'Test Name, Test Name');
+
+        comp.nestedComponent.name = 'Another Test';
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Another Test, Another Test');
+    });
+
+    it('Should be able to render a component that passes in an object to a nested component', () => {
+        let state = new State;
+        let textElement, comp;
+
+        @Component
+        class MyNestedComponent {
+            @Attribute obj;
+
+            render() {
+                return this.children;
+            }
+        }
+
+        @Component
+        class MyComponent {
+            @Observable nestedComponent;
+            @Attribute val;
+
+            render() {
+                return <MyNestedComponent obj={ { val: 'Test' } } ref={ this.nestedComponent }>
+                    <div>{ this.val }</div>
+                    <div ref={ textElement }>{ this.nestedComponent && this.nestedComponent.obj && this.nestedComponent.obj.val }</div>
+                </MyNestedComponent>;
+            }
+        }
+
+        sinon.spy(console, 'error');
+
+        render(<MyComponent val={ state.name } ref={ comp }/>);
+        assert.equal(textElement.textContent, 'Test');
+        assert.equal(console.error.callCount, 0);
+
+        state.name = 'Test';
+        TaskQueue.run();
+        assert.equal(textElement.textContent, 'Test');
+        assert(console.error.calledWith('`MyComponent` is in a repeating render loop. Check for cyclic dependencies between observables.'));
+        console.error.restore();
     });
 
 });
