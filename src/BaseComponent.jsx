@@ -16,6 +16,11 @@ import React from 'react';
 import { Binder, Disposable, SignalDispatcher, Scope, TaskQueue } from '@twist/core';
 import { definedAttributes, getEventHandler } from './internal/AttributeUtils';
 
+// It's possible for two render functions to have a cyclic dependency, where one updating
+// invalidates the other. Because of this, if we detect too many updates in the same stack,
+// we abort (otherwise the program could hang in an infinite loop).
+const REPEATED_UPDATE_LIMIT = 5;
+
 let BinderRecordChange = Binder.recordChange;
 let BinderRecordEvent = Binder.recordEvent;
 let noop = () => undefined;
@@ -57,9 +62,22 @@ export default class Component extends React.PureComponent {
                 // because forceUpdate is expensive, so we can avoid doing unnecessary work (and also the watch
                 // only gets triggered when the render contents actually change)
                 let isQueued = false;
+                let updateCount = 0;
+                let clearUpdateCount = () => updateCount = 0;
                 let forceUpdate = () => {
                     isQueued = false;
                     if (binder.dirty) {
+
+                        // This detects if we're executing forceUpdate() more than a certain number of times on
+                        // the same call stack, so we can detect if we're in an infinite loop. If we have two
+                        // render functions that are repeatedly invalidating one another, this allows us to abort.
+                        !updateCount && setTimeout(clearUpdateCount);
+                        if (updateCount++ > REPEATED_UPDATE_LIMIT) {
+                            console.error(`\`${this.constructor.name}\` is in a repeating render loop. Check for cyclic dependencies between observables.`);
+                            return;
+                        }
+
+                        // Tell React to re-render
                         this.forceUpdate();
                     }
                 };
@@ -69,14 +87,21 @@ export default class Component extends React.PureComponent {
                     // no matter how fast the value changes (otherwise you get artifacts like the cursor moving to the end
                     // of the input). You have to explicitly turn this off, via `@Component({throttleUpdates: false})`.
                     if (this.throttleUpdates === false) {
+                        // PERFORMANCE DANGER ZONE
+                        // Without throttling, we'll do a force update on _every_ change to an observable, so if you
+                        // change multiple observables at once, it'll re-render multiple times (rather than batching them)
                         forceUpdate();
                         return;
                     }
 
                     // Throttling: When invalidated, we'll only update at most once per rAF.
                     if (!isQueued) {
-                        forceUpdate();
-                        TaskQueue.push(forceUpdate, 100000);
+                        if (!TaskQueue.running) {
+                            // If we're already executing the task queue, then any tasks we push will get executed
+                            // straight away, so there's no need to do an immediate update as well.
+                            forceUpdate();
+                        }
+                        TaskQueue.push(forceUpdate);
                         isQueued = true;
                     }
                 };
@@ -97,15 +122,15 @@ export default class Component extends React.PureComponent {
             // (Note, triggering the Binder changes on componentDidUpdate avoids this problem, but causes multiple renders for a single update).
             this[_newProps] = newProps;
 
-            for (let key in this.props) {
+            for (let key in this[_props]) {
                 // We have to signal a change if any of the props change, so that any watches that depend on them will trigger!
-                if (this.props[key] !== newProps[key]) {
+                if (this[_props][key] !== newProps[key]) {
                     BinderRecordChange(this, 'props.' + key);
                 }
             }
             for (let key in newProps) {
                 // Also check for new props that were added
-                if (!this.props.hasOwnProperty(key)) {
+                if (!this[_props].hasOwnProperty(key)) {
                     BinderRecordChange(this, 'props.' + key);
                 }
             }
@@ -247,7 +272,7 @@ export default class Component extends React.PureComponent {
 
         // Handle triggering custom events:
         let camelCaseName = getEventHandler(eventName);
-        let handler = this.props[camelCaseName];
+        let handler = this[_props][camelCaseName];
         if (typeof handler === 'function') {
             handler(...args);
         }
