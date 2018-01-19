@@ -15,7 +15,7 @@
 import assert from 'assert';
 import sinon from 'sinon';
 import { render } from '../Utils';
-import { TaskQueue } from '@twist/core';
+import { TaskQueue, ObservableArray } from '@twist/core';
 
 // Used by the tests if they need to bind to an external observable
 class State {
@@ -50,25 +50,77 @@ describe('@Component decorator', () => {
     it('Basic @Component with an @Observable that updates', () => {
         let state = new State;
         let textElement;
+        let renderCount = 0;
 
         @Component
         class MyComponent {
-            @Attribute name;
-
             render() {
+                renderCount++;
                 return <div ref={ element => textElement = element }>{ state.name }</div>;
             }
         }
 
         // Attribute should be rendered in DOM:
-        render(<MyComponent name="Bob" />);
+        render(<MyComponent />);
         assert.equal(textElement.textContent, 'Bob');
+        assert.equal(renderCount, 1);
 
         // Should update when we modify the observable
         state.name = 'John';
+        state.name = 'Charles';
+        state.name = 'Harry';
+        state.name = 'Henry';
+        state.name = 'Houdini';
         state.name = 'Dave';
         TaskQueue.run();
         assert.equal(textElement.textContent, 'Dave');
+        assert.equal(renderCount, 3);
+    });
+
+    it('Basic @Component with an @Observable that updates via a watch', () => {
+        let state = new State;
+        let textElement;
+        let renderCount = 0;
+
+        sinon.spy(console, 'error');
+
+        @Component
+        class MyComponent {
+            items = new ObservableArray;
+
+            constructor() {
+                super();
+
+                // It's bad practice to use watches to update derived state, but this is to test
+                // that if you _do_, it'll update as expected.
+                this.watch(() => state.name, newName => {
+                    if (newName === null) {
+                        for (let i = 0; i < 10; i++) {
+                            this.items.push(i);
+                        }
+                    }
+                });
+            }
+
+            render() {
+                renderCount++;
+                return <div ref={ element => textElement = element }>{ this.items.join(',') }</div>;
+            }
+        }
+
+        // Attribute should be rendered in DOM:
+        render(<MyComponent />);
+        assert.equal(textElement.textContent, '');
+        assert.equal(renderCount, 1);
+
+        // Should update when we modify the observable
+        state.name = null;
+        TaskQueue.run();
+        assert.equal(textElement.textContent, '0,1,2,3,4,5,6,7,8,9');
+        assert.equal(renderCount, 2);
+
+        assert.equal(console.error.callCount, 0);
+        console.error.restore();
     });
 
     it('Nested @Component passing data via an attribute that updates', () => {

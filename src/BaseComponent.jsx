@@ -87,6 +87,9 @@ export default class Component extends React.PureComponent {
                     // no matter how fast the value changes (otherwise you get artifacts like the cursor moving to the end
                     // of the input). You have to explicitly turn this off, via `@Component({throttleUpdates: false})`.
                     if (this.throttleUpdates === false) {
+                        // PERFORMANCE DANGER ZONE
+                        // Without throttling, we'll do a force update on _every_ change to an observable, so if you
+                        // change multiple observables at once, it'll re-render multiple times (rather than batching them)
                         forceUpdate();
                         return;
                     }
