@@ -597,8 +597,8 @@ describe('@Component decorator', () => {
     });
 
     it('Should be able to render a component that uses two-way binding on an attribute', () => {
-
         let textElement, comp;
+        let renderCount = 0;
 
         @Component
         class MyNestedComponent {
@@ -615,6 +615,7 @@ describe('@Component decorator', () => {
             @Observable nestedComponent;
 
             render() {
+                renderCount++;
                 return <MyNestedComponent bind:name={ this.name } ref={ this.nestedComponent }>
                     <div ref={ textElement }>{ this.name + ', ' + (this.nestedComponent && this.nestedComponent.name) }</div>
                 </MyNestedComponent>;
@@ -623,15 +624,24 @@ describe('@Component decorator', () => {
 
         render(<MyComponent ref={ comp }/>);
         assert.equal(textElement.textContent, 'Test Name, Test Name');
+        assert.equal(renderCount, 2); // Renders twice each time because the name has to propagate back up from the nested component
 
         comp.nestedComponent.name = 'Another Test';
         TaskQueue.run();
         assert.equal(textElement.textContent, 'Another Test, Another Test');
+        assert.equal(renderCount, 4);
+
+        // Should be in a stable state - so no further rendering on subsequent frames
+        TaskQueue.run();
+        TaskQueue.run();
+        TaskQueue.run();
+        assert.equal(renderCount, 4);
     });
 
     it('Should be able to render a component that passes in an object to a nested component', () => {
         let state = new State;
         let textElement, comp;
+        let renderCount = 0;
 
         @Component
         class MyNestedComponent {
@@ -648,6 +658,7 @@ describe('@Component decorator', () => {
             @Attribute val;
 
             render() {
+                renderCount++;
                 return <MyNestedComponent obj={ { val: 'Test' } } ref={ this.nestedComponent }>
                     <div>{ this.val }</div>
                     <div ref={ textElement }>{ this.nestedComponent && this.nestedComponent.obj && this.nestedComponent.obj.val }</div>
@@ -660,11 +671,20 @@ describe('@Component decorator', () => {
         render(<MyComponent val={ state.name } ref={ comp }/>);
         assert.equal(textElement.textContent, 'Test');
         assert.equal(console.error.callCount, 0);
+        assert.equal(renderCount, 2); // Renders twice because it needs to get a ref to the nested component
 
         state.name = 'Test';
         TaskQueue.run();
         assert.equal(textElement.textContent, 'Test');
         assert(console.error.calledWith('`MyComponent` is in a repeating render loop. Check for cyclic dependencies between observables.'));
+        assert.equal(renderCount, 7); // Additional 5 renders before we catch the loop
+
+        // Should be in a stable state - so no further rendering on subsequent frames
+        TaskQueue.run();
+        TaskQueue.run();
+        TaskQueue.run();
+        assert.equal(renderCount, 7);
+
         console.error.restore();
     });
 
