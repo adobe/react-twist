@@ -31,7 +31,11 @@ function isConcreteComponent(item) {
 }
 
 function concreteItemTransform(item) {
-    return isConcreteComponent(item) ? item[_items] : item;
+    if (isConcreteComponent(item)) {
+        BinderRecordEvent(item, 'virtual.children');
+        return item[_items];
+    }
+    return item;
 }
 
 function flatten(arr, skipTest, itemTransform, flattenedArr) {
@@ -68,8 +72,9 @@ function instantiateContent(content, context) {
             instance[_dirty] = false;
             instance[_queuedUpdate] = false;
             instance[_items] = [];
-            instance.forceUpdate = BaseVirtualComponent.prototype.forceUpdate;
             instance[_virtualRender] = BaseVirtualComponent.prototype[_virtualRender];
+            instance.forceUpdate = BaseVirtualComponent.prototype.forceUpdate;
+
         }
         return instance;
     }
