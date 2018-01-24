@@ -26,9 +26,17 @@ function isNullOrNotVirtual(item) {
     return !item || !(item instanceof BaseVirtualComponent);
 }
 
-function flatten(arr, skipTest, flattenedArr) {
+function isConcreteComponent(item) {
+    return (item instanceof BaseComponent) && !(item instanceof BaseVirtualComponent);
+}
+
+function concreteItemTransform(item) {
+    return isConcreteComponent(item) ? item[_items] : item;
+}
+
+function flatten(arr, skipTest, itemTransform, flattenedArr) {
     for (let i = 0; i < arr.length; i++) {
-        let item = arr[i];
+        let item = itemTransform ? itemTransform(arr[i]) : arr[i];
         let shouldIgnore = skipTest(item);
         let isArray = Array.isArray(item);
 
@@ -39,7 +47,7 @@ function flatten(arr, skipTest, flattenedArr) {
 
         if (flattenedArr) {
             if (isArray) {
-                flatten(item, skipTest, flattenedArr);
+                flatten(item, skipTest, itemTransform, flattenedArr);
             }
             else if (!shouldIgnore) {
                 flattenedArr.push(item);
@@ -52,7 +60,18 @@ function flatten(arr, skipTest, flattenedArr) {
 function instantiateContent(content, context) {
     try {
         let ContentClass = content.type;
-        return new ContentClass(content.props, context);
+        let instance = new ContentClass(content.props, context);
+        if (isConcreteComponent(instance)) {
+            // You can mix real and virtual components, but the virtualRender method expects all
+            // components in the tree to be able to be rendered virtually. We add the necessary methods
+            // to the component instance, so that this works:
+            instance[_dirty] = false;
+            instance[_queuedUpdate] = false;
+            instance[_items] = [];
+            instance.forceUpdate = BaseVirtualComponent.prototype.forceUpdate;
+            instance[_virtualRender] = BaseVirtualComponent.prototype[_virtualRender];
+        }
+        return instance;
     }
     catch (e) {
         // We just fall back to a plain virtual component and print an error, if we see an HTML element
@@ -237,7 +256,7 @@ export default class BaseVirtualComponent {
      */
     get children() {
         BinderRecordEvent(this, 'virtual.children');
-        return flatten(this[_items], isNullOrNotVirtual);
+        return flatten(this[_items], isNullOrNotVirtual, concreteItemTransform);
     }
 
 }

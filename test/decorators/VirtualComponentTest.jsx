@@ -277,4 +277,37 @@ describe('@VirtualComponent decorator', () => {
         console.error.restore();
     });
 
+    it('@VirtualComponent can have normal components inside it', () => {
+
+        @Component
+        class DynamicItem {
+            @Attribute name;
+            render() {
+                return <if condition={ this.name }>
+                    <Item name={ this.name } />
+                </if>;
+            }
+
+        }
+
+        @Component
+        class DynamicList {
+            @Attribute names;
+            render() {
+                return <repeat for={ name in this.names }>
+                    <DynamicItem name={ name } />
+                </repeat>;
+            }
+        }
+
+        let elements = [];
+        render(<View elements={ elements }><DynamicList names={ [ 'T1', 'T2', 'T3' ] }/></View>);
+        TaskQueue.run();
+        assert.deepEqual(elements.map(e => e.textContent), [
+            '3',
+            'yes',
+            'T1,T2,T3'
+        ]);
+    });
+
 });
