@@ -19,7 +19,7 @@ import { definedAttributes, getEventHandler } from './internal/AttributeUtils';
 // It's possible for two render functions to have a cyclic dependency, where one updating
 // invalidates the other. Because of this, if we detect too many updates in the same stack,
 // we abort (otherwise the program could hang in an infinite loop).
-const REPEATED_UPDATE_LIMIT = 5;
+const REPEATED_UPDATE_LIMIT = 50;
 
 let BinderRecordChange = Binder.recordChange;
 let BinderRecordEvent = Binder.recordEvent;

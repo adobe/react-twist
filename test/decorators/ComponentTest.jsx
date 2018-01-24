@@ -729,13 +729,13 @@ describe('@Component decorator', () => {
         TaskQueue.run();
         assert.equal(textElement.textContent, 'Test');
         assert(console.error.calledWith('`MyComponent` is in a repeating render loop. Check for cyclic dependencies between observables.'));
-        assert.equal(renderCount, 7); // Additional 5 renders before we catch the loop
+        assert.equal(renderCount, 52); // Additional 50 renders before we catch the loop
 
         // Should be in a stable state - so no further rendering on subsequent frames
         TaskQueue.run();
         TaskQueue.run();
         TaskQueue.run();
-        assert.equal(renderCount, 7);
+        assert.equal(renderCount, 52);
 
         console.error.restore();
     });
