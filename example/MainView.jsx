@@ -81,7 +81,7 @@ class TodoItem {
 @Component({ throttleUpdates: false })
 export default class MainView {
     @Observable userName;
-    @Observable filterCompleted;
+    @Observable filterCompleted = false;
 
     constructor(props, context) {
         super(props, context);
