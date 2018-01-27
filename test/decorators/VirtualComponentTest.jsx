@@ -170,6 +170,46 @@ describe('@VirtualComponent decorator', () => {
         ]);
     });
 
+    it('@VirtualComponent should dynamically update with lifecycle events', () => {
+        let elements = [];
+        let items = new ObservableArray([ 1 ]);
+        let events = [];
+
+        @VirtualComponent
+        class LifecycleItem {
+            @Attribute name;
+            componentDidMount() {
+                events.push('+' + this.name);
+            }
+            componentWillUnmount() {
+                events.push('-' + this.name);
+            }
+        }
+
+        @Component
+        class MyComponent {
+            render() {
+                return <View elements={ elements }>
+                    <repeat for={ x in items }>
+                        <LifecycleItem name={ x } />
+                    </repeat>
+                </View>;
+            }
+        }
+
+        render(<MyComponent />);
+        assert.deepEqual(events, [ '+1' ]);
+
+        items.push(2);
+        items.push(3);
+        TaskQueue.run();
+        assert.deepEqual(events, [ '+1', '+2', '+3' ]);
+
+        items.splice(0, 3);
+        TaskQueue.run();
+        assert.deepEqual(events, [ '+1', '+2', '+3', '-1', '-2', '-3' ]);
+    });
+
     it('@VirtualComponent should dynamically update with different child items', () => {
         let elements = [];
 
