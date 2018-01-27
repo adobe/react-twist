@@ -177,6 +177,7 @@ export default class BaseVirtualComponent {
             let item = items[i];
 
             if (item && !(item instanceof content.type)) {
+                item.componentWillUnmount && item.componentWillUnmount();
                 this.unlink(item);
                 item = undefined;
             }
@@ -189,18 +190,19 @@ export default class BaseVirtualComponent {
                 items[i] = this.link(instantiateContent(content, childContext));
                 items[i]._parent = this;
                 items[i][_virtualRender]();
+                items[i].componentDidMount && items[i].componentDidMount();
             }
         }
         for (let i = contents.length; i < items.length; i++) {
             let item = items[i];
             if (item) {
+                item.componentWillUnmount && item.componentWillUnmount();
                 this.unlink(item);
             }
         }
         items.length = contents.length;
 
         BinderRecordChange(this, 'virtual.children');
-        // TODO: Trigger an event so this can be extended
     }
 
     /**
