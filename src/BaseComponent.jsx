@@ -96,11 +96,11 @@ export default class Component extends React.PureComponent {
 
                     // Throttling: When invalidated, we'll only update at most once per rAF.
                     if (!isQueued) {
-                        if (!TaskQueue.running) {
-                            // If we're already executing the task queue, then any tasks we push will get executed
-                            // straight away, so there's no need to do an immediate update as well.
-                            forceUpdate();
-                        }
+                        // if (!TaskQueue.running) {
+                        //     // If we're already executing the task queue, then any tasks we push will get executed
+                        //     // straight away, so there's no need to do an immediate update as well.
+                        //     forceUpdate();
+                        // }
                         TaskQueue.push(forceUpdate);
                         isQueued = true;
                     }
