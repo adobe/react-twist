@@ -14,7 +14,8 @@
 /* global describe it afterEach */
 import assert from 'assert';
 import sinon from 'sinon';
-import { render } from '../Utils';
+import { render } from '@twist/react/test-utils';
+
 import { TaskQueue, ObservableArray } from '@twist/core';
 
 /**
