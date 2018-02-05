@@ -2,11 +2,11 @@
 # yarn lockfile v1
 
 
-"@twist/babel-plugin-transform-react@0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@twist/babel-plugin-transform-react/-/babel-plugin-transform-react-0.1.1.tgz#2d74eafff63e982d731942f1732a21e323de3bdb"
+"@twist/babel-plugin-transform-react@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/@twist/babel-plugin-transform-react/-/babel-plugin-transform-react-0.1.6.tgz#78aaaccb624ec14dadd4248d2bf05a8723564ea1"
   dependencies:
-    "@twist/babel-plugin-transform" "0.1.0"
+    "@twist/babel-plugin-transform" "0.2.1"
     babel-core "^6.26.0"
     babel-template "^6.26.0"
     babel-types "^6.26.0"
@@ -14,6 +14,27 @@
 "@twist/babel-plugin-transform@0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@twist/babel-plugin-transform/-/babel-plugin-transform-0.1.0.tgz#fffad1c835916e1cd1bb387d0cdf94b1a70f0ed4"
+  dependencies:
+    babel-core "^6.26.0"
+    babel-helper-module-imports "^7.0.0-beta.3"
+    babel-plugin-syntax-async-generators "^6.13.0"
+    babel-plugin-syntax-class-properties "^6.13.0"
+    babel-plugin-syntax-decorators "^6.13.0"
+    babel-plugin-syntax-do-expressions "^6.13.0"
+    babel-plugin-syntax-dynamic-import "^6.18.0"
+    babel-plugin-syntax-export-extensions "^6.13.0"
+    babel-plugin-syntax-flow "^6.18.0"
+    babel-plugin-syntax-function-bind "^6.13.0"
+    babel-plugin-syntax-function-sent "^6.13.0"
+    babel-plugin-syntax-jsx "^6.18.0"
+    babel-plugin-syntax-object-rest-spread "^6.13.0"
+    babel-template "^6.26.0"
+    babel-types "^6.26.0"
+    recast "^0.12.9"
+
+"@twist/babel-plugin-transform@0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@twist/babel-plugin-transform/-/babel-plugin-transform-0.2.1.tgz#2dc5faf1a001c49f9433a2a3ab6b7f3252a1b7e8"
   dependencies:
     babel-core "^6.26.0"
     babel-helper-module-imports "^7.0.0-beta.3"
@@ -88,11 +109,11 @@
     "@twist/configuration" "0.1.0"
     requireindex "1.1.0"
 
-"@twist/react-webpack-plugin@^0.1.0":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@twist/react-webpack-plugin/-/react-webpack-plugin-0.1.1.tgz#ae1b8ef8b45d95601f1978f58f9c0e3f49ab2b86"
+"@twist/react-webpack-plugin@^0.1.5":
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/@twist/react-webpack-plugin/-/react-webpack-plugin-0.1.5.tgz#2c661a99e0862512db347ade9273bc93a67514b6"
   dependencies:
-    "@twist/babel-plugin-transform-react" "0.1.1"
+    "@twist/babel-plugin-transform-react" "0.1.6"
     "@twist/configuration" "0.1.0"
     babel-loader "^7.1.2"
     thread-loader "^1.1.2"
