@@ -14,9 +14,10 @@
 /* global describe it afterEach */
 import assert from 'assert';
 import sinon from 'sinon';
-import { render } from '../Utils';
-import { TaskQueue } from '@twist/core';
+import { render } from '@twist/react/test-utils';
 import { Simulate } from 'react-dom/test-utils';
+
+import { TaskQueue } from '@twist/core';
 import PropTypes from 'prop-types';
 
 describe('@Attribute decorator', () => {

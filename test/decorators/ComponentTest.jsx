@@ -14,9 +14,10 @@
 /* global describe it afterEach */
 import assert from 'assert';
 import sinon from 'sinon';
-import { render } from '../Utils';
-import { TaskQueue, ObservableArray } from '@twist/core';
+import { render } from '@twist/react/test-utils';
 import { Simulate } from 'react-dom/test-utils';
+
+import { TaskQueue, ObservableArray } from '@twist/core';
 
 // Used by the tests if they need to bind to an external observable
 class State {
