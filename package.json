@@ -23,7 +23,8 @@
     "react-dom": "^16.0.0"
   },
   "peerDependencies": {
-    "@twist/core": "^0.1.0"
+    "@twist/core": "^0.1.0",
+    "@twist/babel-plugin-transform-react": "^0.1.6"
   },
   "devDependencies": {
     "@twist/core": "^0.1.0",
