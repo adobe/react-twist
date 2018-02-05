@@ -618,28 +618,6 @@ describe('@Component decorator', () => {
         console.warn.restore();
     });
 
-    it('@Component should support a throttleUpdates:false option to update immediately on every change', () => {
-        let comp, textElement;
-
-        @Component({ throttleUpdates: false })
-        class MyComponent {
-            @Observable text = 'Hello';
-            render() {
-                return <div ref={ textElement }>{ this.text }</div>;
-            }
-        }
-
-        render(<MyComponent ref={ comp } />);
-        assert.equal(textElement.textContent, 'Hello');
-
-        comp.text = 'Goodbye';
-        assert.equal(textElement.textContent, 'Goodbye');
-
-        // Without forceUpdate this will be throttled
-        comp.text = 'Hello';
-        assert.equal(textElement.textContent, 'Hello');
-    });
-
     it('Should be able to render a component when render() returns undefined', () => {
         @Component
         class MyComponent {

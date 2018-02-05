@@ -18,8 +18,7 @@ import DecoratorUtils from '@twist/core/src/internal/utils/DecoratorUtils';
 // Supported options of @Component, with their default values
 let DEFAULT_OPTIONS = {
     fork: true,
-    events: [],
-    throttleUpdates: true
+    events: []
 };
 
 export default DecoratorUtils.makeClassDecorator((target, args = {}) => {
