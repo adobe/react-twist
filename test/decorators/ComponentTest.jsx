@@ -16,6 +16,7 @@ import assert from 'assert';
 import sinon from 'sinon';
 import { render } from '../Utils';
 import { TaskQueue, ObservableArray } from '@twist/core';
+import { Simulate } from 'react-dom/test-utils';
 
 // Used by the tests if they need to bind to an external observable
 class State {
@@ -74,7 +75,7 @@ describe('@Component decorator', () => {
         state.name = 'Dave';
         TaskQueue.run();
         assert.equal(textElement.textContent, 'Dave');
-        assert.equal(renderCount, 3);
+        assert.equal(renderCount, 2);
     });
 
     it('Basic @Component with an @Observable that updates via a watch', () => {
@@ -342,7 +343,8 @@ describe('@Component decorator', () => {
 
         events = [];
         Data.name = 'Bob';
-        assert.deepEqual(events, [ 'will_update', 'render', 'did_update', 'will_update', 'did_update' ]);
+        TaskQueue.run();
+        assert.deepEqual(events, [ 'will_update', 'render', 'did_update' ]);
 
         events = [];
         render.dispose();
@@ -616,28 +618,6 @@ describe('@Component decorator', () => {
         console.warn.restore();
     });
 
-    it('@Component should support a throttleUpdates:false option to update immediately on every change', () => {
-        let comp, textElement;
-
-        @Component({ throttleUpdates: false })
-        class MyComponent {
-            @Observable text = 'Hello';
-            render() {
-                return <div ref={ textElement }>{ this.text }</div>;
-            }
-        }
-
-        render(<MyComponent ref={ comp } />);
-        assert.equal(textElement.textContent, 'Hello');
-
-        comp.text = 'Goodbye';
-        assert.equal(textElement.textContent, 'Goodbye');
-
-        // Without forceUpdate this will be throttled
-        comp.text = 'Hello';
-        assert.equal(textElement.textContent, 'Hello');
-    });
-
     it('Should be able to render a component when render() returns undefined', () => {
         @Component
         class MyComponent {
@@ -646,6 +626,33 @@ describe('@Component decorator', () => {
             }
         }
         render(<MyComponent />);
+    });
+
+    it('Should be able to render a component with an input that uses two-way binding', () => {
+        let inputElement, comp;
+        let renderCount = 0;
+
+        @Component
+        class MyComponent {
+            @Observable name = 'Test Name';
+
+            render() {
+                renderCount++;
+                return <input ref={ inputElement } bind:value={ this.name } />;
+            }
+        }
+
+        render(<MyComponent ref={ comp }/>);
+        assert.equal(renderCount, 1);
+
+        // Updates without needing a TaskQueue.run(), because this is a controlled element
+        Simulate.change(inputElement, { target: { value: 'Test Another Name' } });
+        assert.equal(comp.name, 'Test Another Name');
+        assert.equal(renderCount, 2);
+
+        Simulate.change(inputElement, { target: { value: 'Test Another Name 2' } });
+        assert.equal(comp.name, 'Test Another Name 2');
+        assert.equal(renderCount, 3);
     });
 
     it('Should be able to render a component that uses two-way binding on an attribute', () => {
@@ -674,14 +681,24 @@ describe('@Component decorator', () => {
             }
         }
 
+        // In the initial render, the nested component reference isn't yet defined
         render(<MyComponent ref={ comp }/>);
+        assert.equal(textElement.textContent, 'Test Name, undefined');
+        assert.equal(renderCount, 1);
+
+        // On the next render, the reference propagates back up
+        TaskQueue.run();
         assert.equal(textElement.textContent, 'Test Name, Test Name');
-        assert.equal(renderCount, 2); // Renders twice each time because the name has to propagate back up from the nested component
+        assert.equal(renderCount, 2);
+
+        // Should not render again since things are stable
+        TaskQueue.run();
+        assert.equal(renderCount, 2);
 
         comp.nestedComponent.name = 'Another Test';
         TaskQueue.run();
         assert.equal(textElement.textContent, 'Another Test, Another Test');
-        assert.equal(renderCount, 4);
+        assert.equal(renderCount, 4); // Renders twice because the name propagates back up
 
         // Should be in a stable state - so no further rendering on subsequent frames
         TaskQueue.run();
@@ -721,11 +738,11 @@ describe('@Component decorator', () => {
         sinon.spy(console, 'error');
 
         render(<MyComponent val={ state.name } ref={ comp }/>);
-        assert.equal(textElement.textContent, 'Test');
+        assert.equal(textElement.textContent, '');
         assert.equal(console.error.callCount, 0);
-        assert.equal(renderCount, 2); // Renders twice because it needs to get a ref to the nested component
+        assert.equal(renderCount, 1);
 
-        state.name = 'Test';
+        // Only updates on second render because it needs to get a ref to the nested component
         TaskQueue.run();
         assert.equal(textElement.textContent, 'Test');
         assert(console.error.calledWith('`MyComponent` is in a repeating render loop. Check for cyclic dependencies between observables.'));

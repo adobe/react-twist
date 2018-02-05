@@ -85,7 +85,9 @@ export default class Component extends React.PureComponent {
                     // Normally we throttle updates (in case a component changes a lot!), but sometimes this is
                     // undesirable - e.g. if the component contains input fields, you may want them to update immediately,
                     // no matter how fast the value changes (otherwise you get artifacts like the cursor moving to the end
-                    // of the input). You have to explicitly turn this off, via `@Component({throttleUpdates: false})`.
+                    // of the input).
+                    // If you have an onChange listener on an input element, the react-twist Babel transform will automatically
+                    // turn off throttling during the input's change listener.
                     if (this.throttleUpdates === false) {
                         // PERFORMANCE DANGER ZONE
                         // Without throttling, we'll do a force update on _every_ change to an observable, so if you
@@ -96,11 +98,6 @@ export default class Component extends React.PureComponent {
 
                     // Throttling: When invalidated, we'll only update at most once per rAF.
                     if (!isQueued) {
-                        if (!TaskQueue.running) {
-                            // If we're already executing the task queue, then any tasks we push will get executed
-                            // straight away, so there's no need to do an immediate update as well.
-                            forceUpdate();
-                        }
                         TaskQueue.push(forceUpdate);
                         isQueued = true;
                     }

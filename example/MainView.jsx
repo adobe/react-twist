@@ -43,7 +43,7 @@ var ASYNC_TODO = function(store) {
     setTimeout(() => store.dispatch('EDIT_TODO', { id, title: 'Delayed Title' }), 1000);
 };
 
-@Component({ throttleUpdates: false })
+@Component
 class TodoItem {
     @Attribute(PropTypes.object) item;
     @Attribute(PropTypes.number) index;
@@ -78,7 +78,7 @@ class TodoItem {
     }
 }
 
-@Component({ throttleUpdates: false })
+@Component
 export default class MainView {
     @Observable userName;
     @Observable filterCompleted = false;

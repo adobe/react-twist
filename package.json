@@ -23,12 +23,13 @@
     "react-dom": "^16.0.0"
   },
   "peerDependencies": {
-    "@twist/core": "^0.1.0"
+    "@twist/core": "^0.1.0",
+    "@twist/babel-plugin-transform-react": "^0.1.6"
   },
   "devDependencies": {
     "@twist/core": "^0.1.0",
     "@twist/eslint-plugin-core": "^0.1.2",
-    "@twist/react-webpack-plugin": "^0.1.0",
+    "@twist/react-webpack-plugin": "^0.1.5",
     "autoprefixer": "6.4.0",
     "babel-eslint": "7.2.3",
     "babel-plugin-istanbul": "4.1.5",

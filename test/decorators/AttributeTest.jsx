@@ -15,6 +15,7 @@
 import assert from 'assert';
 import sinon from 'sinon';
 import { render } from '../Utils';
+import { TaskQueue } from '@twist/core';
 import { Simulate } from 'react-dom/test-utils';
 import PropTypes from 'prop-types';
 
@@ -178,6 +179,7 @@ describe('@Attribute decorator', () => {
 
         // Changing the name in the child, should propagate to the parent, since we're using "bind:name"
         Simulate.click(textElement);
+        TaskQueue.run();
         assert.equal(textElement.textContent, 'Dave_');
         assert.equal(parentComp.name, 'Dave_');
     });
