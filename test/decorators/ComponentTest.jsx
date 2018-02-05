@@ -667,12 +667,14 @@ describe('@Component decorator', () => {
         render(<MyComponent ref={ comp }/>);
         assert.equal(renderCount, 1);
 
+        // Updates without needing a TaskQueue.run(), because this is a controlled element
         Simulate.change(inputElement, { target: { value: 'Test Another Name' } });
-        Simulate.change(inputElement, { target: { value: 'Test Another Name 2' } });
-
-        TaskQueue.run(); // Shouldn't need this when we update the babel transform
-        assert.equal(comp.name, 'Test Another Name 2');
+        assert.equal(comp.name, 'Test Another Name');
         assert.equal(renderCount, 2);
+
+        Simulate.change(inputElement, { target: { value: 'Test Another Name 2' } });
+        assert.equal(comp.name, 'Test Another Name 2');
+        assert.equal(renderCount, 3);
     });
 
     it('Should be able to render a component that uses two-way binding on an attribute', () => {
