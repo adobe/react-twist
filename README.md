@@ -1,6 +1,6 @@
 # React-Twist: It's React... with a Twist!
 
-[![Build Status](https://travis-ci.org/adobe/react-twist.svg?branch=master)](https://travis-ci.org/adobe/react-twist)
+[![Build Status](https://travis-ci.org/adobe/react-twist.svg?branch=master)](https://travis-ci.org/adobe/react-twist) [![Greenkeeper badge](https://badges.greenkeeper.io/adobe/react-twist.svg)](https://greenkeeper.io/)
 
 [Twist](https://github.com/adobe/twist) is a reactive state-management library for JavaScript applications, and React-Twist lets you use this on top of [React](https://reactjs.org/). In addition to data binding and state-management primitives, React-Twist also adds some syntax enhancements on top of React, designed to maximize your productivity!
 
